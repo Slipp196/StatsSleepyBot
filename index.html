@@ -103,15 +103,16 @@
   .counter .num { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }
   .counter .word { font-size: 10px; color: rgba(255,255,255,0.34); }
 
-  /* ===== VIEWS (with crossfade + blur + scale) ===== */
+  /* ===== VIEWS ===== */
   .view-container { flex: 1; min-height: 0; position: relative; }
   .view {
     position: absolute; inset: 0;
     display: flex; flex-direction: column; gap: 2px;
     opacity: 0;
-    transform: scale(0.965) translateY(6px);
-    filter: blur(5px);
+    transform: scale(0.96);
+    filter: blur(6px);
     pointer-events: none;
+    will-change: opacity, transform, filter;
     transition:
       opacity 0.42s cubic-bezier(.22,1,.36,1),
       transform 0.52s cubic-bezier(.22,1,.36,1),
@@ -119,7 +120,7 @@
   }
   .view.active {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: scale(1);
     filter: blur(0);
     pointer-events: auto;
   }
@@ -414,9 +415,9 @@
       </linearGradient>
       <mask id="crescentMask" maskUnits="userSpaceOnUse" x="0" y="0" width="200" height="200">
         <rect x="0" y="0" width="200" height="200" fill="black"/>
-        <!-- shifted right to compensate the crescent's visual weight -->
-        <circle cx="118" cy="100" r="42" fill="white"/>
-        <circle cx="140" cy="99"  r="39" fill="black"/>
+        <!-- Outer moon circle CENTERED at (100,100). Inner cut shifted right. -->
+        <circle cx="100" cy="100" r="42" fill="white"/>
+        <circle cx="121" cy="99"  r="37" fill="black"/>
       </mask>
       <filter id="moonGlow" x="-40%" y="-40%" width="180%" height="180%">
         <feGaussianBlur stdDeviation="3"/>
@@ -435,11 +436,11 @@
       <circle class="ldot-y" cx="172.3" cy="129.2" r="5"/>
     </g>
 
-    <!-- Moon (masked, shifted right visually) -->
+    <!-- Moon -->
     <g id="moonGroup">
-      <circle cx="118" cy="100" r="42" fill="#b8ccec" mask="url(#crescentMask)"
+      <circle cx="100" cy="100" r="42" fill="#b8ccec" mask="url(#crescentMask)"
               filter="url(#moonGlow)" opacity="0.5"/>
-      <circle cx="118" cy="100" r="42" fill="url(#moonGrad)" mask="url(#crescentMask)"/>
+      <circle cx="100" cy="100" r="42" fill="url(#moonGrad)" mask="url(#crescentMask)"/>
     </g>
   </svg>
 
@@ -564,7 +565,6 @@
   var awaitingConfirm = false;
   var currentView = "month";
 
-  // DOM
   var app         = document.getElementById("app");
   var loader      = document.getElementById("loader");
   var loaderHint  = document.getElementById("loaderHint");
@@ -592,7 +592,6 @@
   var nextMonthBtn= document.getElementById("nextMonth");
   var viewToggle  = document.getElementById("viewToggle");
 
-  /* ===== UTILS ===== */
   function keyOf(y, m, d) {
     return y + "-" + String(m+1).padStart(2, "0") + "-" + String(d).padStart(2, "0");
   }
@@ -629,8 +628,7 @@
         var raw = localStorage.getItem(CLOUD_KEY);
         data = raw ? JSON.parse(raw) : {};
       } catch(e) { data = {}; }
-      cb();
-      return;
+      cb(); return;
     }
     tg.CloudStorage.getItem(CLOUD_KEY, function (err, value) {
       if (!err && value) {
@@ -650,11 +648,10 @@
     });
   }
 
-  /* ===== ENTRY ANIMATIONS ===== */
+  /* ===== INITIAL REVEAL ANIMATION (only used once, after loader) ===== */
   function animateElementIn(el, delayMs) {
     if (!el || !el.animate || reduceMotion) return;
-    if (el._sleepAnim) { try { el._sleepAnim.cancel(); } catch(e){} }
-    el._sleepAnim = el.animate(
+    el.animate(
       [
         { opacity: 0, transform: "translateY(14px) scale(0.55)", filter: "blur(3px)" },
         { opacity: 1, transform: "translateY(0) scale(1)",      filter: "blur(0)" }
@@ -662,14 +659,12 @@
       { duration: 640, delay: delayMs, easing: "cubic-bezier(.22, 1, .36, 1)", fill: "backwards" }
     );
   }
-
-  function animateMonthGrid() {
+  function revealMonthGrid() {
     if (reduceMotion) return;
     var cells = dayGrid.querySelectorAll(".day-cell:not(.blank)");
     for (var i = 0; i < cells.length; i++) animateElementIn(cells[i], i * 10);
   }
-
-  function animateYearGrid() {
+  function revealYearGrid() {
     if (reduceMotion) return;
     var cols = yearGrid.querySelectorAll(".year-col");
     for (var c = 0; c < cols.length; c++) {
@@ -693,7 +688,6 @@
     nextMonthBtn.disabled = atMax;
 
     dayGrid.innerHTML = "";
-
     var firstDow = new Date(viewYear, viewMonth, 1).getDay();
     var offset   = (firstDow + 6) % 7;
     var total    = new Date(viewYear, viewMonth + 1, 0).getDate();
@@ -711,7 +705,6 @@
     }
     dayGrid.appendChild(frag);
   }
-
   function buildDayCell(year, month, d) {
     var key = keyOf(year, month, d);
     var el = document.createElement("button");
@@ -725,7 +718,6 @@
     el.addEventListener("touchstart", onDayEnter, { passive: true });
     return el;
   }
-
   function applyDayCellState(el, key, year, month, d) {
     el.classList.remove("editable", "future", "locked", "today");
     el.removeAttribute("data-v");
@@ -745,19 +737,15 @@
     for (var m = 0; m < 12; m++) frag.appendChild(buildYearCol(viewYear, m));
     yearGrid.appendChild(frag);
   }
-
   function buildYearCol(year, month) {
     var col = document.createElement("div");
     col.className = "year-col";
-
     var label = document.createElement("div");
     label.className = "year-col-label";
     label.textContent = MONTHS_SHORT[month];
     col.appendChild(label);
-
     var dots = document.createElement("div");
     dots.className = "year-dots";
-
     var total = new Date(year, month + 1, 0).getDate();
     var frag = document.createDocumentFragment();
     for (var d = 1; d <= 31; d++) {
@@ -773,7 +761,6 @@
     col.appendChild(dots);
     return col;
   }
-
   function buildDot(year, month, d) {
     var key = keyOf(year, month, d);
     var el = document.createElement("button");
@@ -785,7 +772,6 @@
     el.addEventListener("mouseenter", onDayEnter);
     return el;
   }
-
   function applyDotState(el, key, year, month, d) {
     el.classList.remove("editable", "future", "locked", "today");
     el.removeAttribute("data-v");
@@ -813,7 +799,6 @@
     prevBtn.disabled = viewYear <= THIS_YEAR - YEARS_BACK;
     buildYearMenu();
   }
-
   function onDayEnter(e) {
     var key = e.currentTarget.dataset.key;
     if (!key) return;
@@ -838,11 +823,10 @@
     openModal(key, dt);
   }
 
-  /* ===== MODAL (two-step confirm) ===== */
+  /* ===== MODAL ===== */
   function openModal(key, dt) {
     activeKey = key;
     var current = data[key];
-
     pendingValue = (current !== undefined && current !== null) ? current : null;
     awaitingConfirm = false;
 
@@ -854,7 +838,6 @@
     deleteBtn.classList.toggle("show", current !== undefined && current !== null);
     backdrop.classList.add("open");
   }
-
   function updateOptionsVisual() {
     var opts = optionsEl.querySelectorAll(".opt");
     for (var i = 0; i < opts.length; i++) {
@@ -862,7 +845,6 @@
       opts[i].classList.toggle("selected", v === pendingValue);
     }
   }
-
   function closeModal() {
     backdrop.classList.remove("open");
     activeKey = null;
@@ -876,7 +858,6 @@
     if (!btn || !activeKey) return;
     var val = Number(btn.dataset.v);
 
-    // Второй клик по тому же значению — подтверждение
     if (awaitingConfirm && pendingValue === val) {
       data[activeKey] = val;
       saveToCloud();
@@ -884,8 +865,6 @@
       closeModal();
       return;
     }
-
-    // Первый клик (или смена значения)
     pendingValue = val;
     awaitingConfirm = true;
     updateOptionsVisual();
@@ -932,21 +911,18 @@
     }
   });
 
-  /* ===== VIEW TOGGLE (with crossfade) ===== */
+  /* ===== VIEW TOGGLE — just crossfade, no dot animation ===== */
   function setView(mode) {
     if (mode === currentView) return;
     currentView = mode;
-
     if (mode === "year") {
       monthView.classList.remove("active");
       yearView.classList.add("active");
       viewToggle.setAttribute("data-mode", "year");
-      setTimeout(animateYearGrid, 220);
     } else {
       yearView.classList.remove("active");
       monthView.classList.add("active");
       viewToggle.setAttribute("data-mode", "month");
-      setTimeout(animateMonthGrid, 220);
     }
   }
   viewToggle.addEventListener("click", function () {
@@ -958,18 +934,16 @@
     if (viewMonth === 0) {
       if (viewYear - 1 >= THIS_YEAR - YEARS_BACK) { viewYear--; viewMonth = 11; }
     } else viewMonth--;
-    updateYearNav(); updateCounter(); renderMonthGrid();
-    if (currentView === "month") animateMonthGrid();
+    updateYearNav(); updateCounter(); renderMonthGrid(); revealMonthGrid();
   });
   nextMonthBtn.addEventListener("click", function () {
     if (viewMonth === 11) {
       if (viewYear + 1 <= THIS_YEAR) { viewYear++; viewMonth = 0; }
     } else viewMonth++;
-    updateYearNav(); updateCounter(); renderMonthGrid();
-    if (currentView === "month") animateMonthGrid();
+    updateYearNav(); updateCounter(); renderMonthGrid(); revealMonthGrid();
   });
 
-  // Swipe
+  // Swipe month
   var tStartX = 0, tStartY = 0, tTime = 0;
   dayGrid.addEventListener("touchstart", function (e) {
     if (e.touches.length !== 1) return;
@@ -990,15 +964,15 @@
   prevBtn.addEventListener("click", function () {
     if (viewYear - 1 >= THIS_YEAR - YEARS_BACK) {
       viewYear--; updateYearNav(); updateCounter();
-      if (currentView === "year") { renderYearGrid(); animateYearGrid(); }
-      else { renderMonthGrid(); }
+      if (currentView === "year") { renderYearGrid(); revealYearGrid(); }
+      else renderMonthGrid();
     }
   });
   nextBtn.addEventListener("click", function () {
     if (viewYear + 1 <= THIS_YEAR) {
       viewYear++; updateYearNav(); updateCounter();
-      if (currentView === "year") { renderYearGrid(); animateYearGrid(); }
-      else { renderMonthGrid(); }
+      if (currentView === "year") { renderYearGrid(); revealYearGrid(); }
+      else renderMonthGrid();
     }
   });
 
@@ -1011,8 +985,8 @@
         if (yr === viewYear) b.classList.add("active");
         b.addEventListener("click", function () {
           viewYear = yr; closeYearMenu(); updateYearNav(); updateCounter();
-          if (currentView === "year") { renderYearGrid(); animateYearGrid(); }
-          else { renderMonthGrid(); }
+          if (currentView === "year") { renderYearGrid(); revealYearGrid(); }
+          else renderMonthGrid();
         });
         yearMenu.appendChild(b);
       })(y);
@@ -1041,22 +1015,16 @@
   var stopStartRotation = 0;
   var moonPhase = 0;
 
-  function easeOutBack(t) {
-    var c1 = 1.70158;
-    var c3 = c1 + 1;
-    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
-  }
-
   function loaderTick(now) {
     if (!lastT) lastT = now;
     var dt = Math.min(50, now - lastT);
     lastT = now;
 
-    // Moon breathe
+    // Moon breathe — pivot at (100, 100)
     moonPhase += dt;
-    var moonScale = 1 + Math.sin(moonPhase / 1400) * 0.045;
+    var moonScale = 1 + Math.sin(moonPhase / 1400) * 0.05;
     moonGroup.setAttribute("transform",
-      "translate(118 100) scale(" + moonScale.toFixed(4) + ") translate(-118 -100)");
+      "translate(100 100) scale(" + moonScale.toFixed(4) + ") translate(-100 -100)");
 
     if (loaderState === "spinning") {
       rotation += dt * 0.11;
@@ -1064,69 +1032,7 @@
       requestAnimationFrame(loaderTick);
     } else if (loaderState === "stopping") {
       var elapsed = now - stopStartT;
-      var duration = 1050;
+      var duration = 1000;
       var t = Math.min(1, elapsed / duration);
-      var ease = easeOutBack(t);
-      var osc = Math.sin(t * Math.PI * 5) * Math.exp(-t * 5.5) * 6;
-      rotation = stopStartRotation + 145 * ease + osc;
-      spinGroup.setAttribute("transform", "rotate(" + rotation.toFixed(2) + " 100 100)");
-
-      if (t >= 1) {
-        loaderState = "done";
-        finishLoading();
-        return;
-      }
-      requestAnimationFrame(loaderTick);
-    }
-  }
-
-  function finishLoading() {
-    loader.classList.add("done");
-    setTimeout(function () {
-      loader.style.display = "none";
-      app.classList.add("ready");
-      if (currentView === "month") animateMonthGrid();
-      else animateYearGrid();
-    }, 480);
-  }
-
-  setTimeout(function () {
-    if (loaderState === "spinning") loaderHint.classList.add("visible");
-  }, 900);
-
-  loader.addEventListener("click", function () {
-    if (loaderState !== "spinning") return;
-    loaderState = "stopping";
-    stopStartT = performance.now();
-    stopStartRotation = rotation;
-    loaderHint.classList.remove("visible");
-  });
-
-  /* ===== START ===== */
-  loadFromCloud(function () {
-    var isWide = window.matchMedia("(min-width: 720px)").matches;
-    currentView = isWide ? "year" : "month";
-
-    updateYearNav();
-    updateCounter();
-    updateDateDisplay(TODAY);
-    renderMonthGrid();
-    renderYearGrid();
-
-    if (currentView === "year") {
-      monthView.classList.remove("active");
-      yearView.classList.add("active");
-      viewToggle.setAttribute("data-mode", "year");
-    } else {
-      yearView.classList.remove("active");
-      monthView.classList.add("active");
-      viewToggle.setAttribute("data-mode", "month");
-    }
-
-    requestAnimationFrame(loaderTick);
-  });
-
-})();
-</script>
-</body>
-</html>
+      // EaseOutCubic + затухающая синусоида = мягкое торможение с отскоком
+      var ease = 1 - Math.pow(1
