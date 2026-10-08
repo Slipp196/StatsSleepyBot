@@ -30,9 +30,9 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .counter{justify-self:end;display:flex;align-items:baseline;gap:3px;font-variant-numeric:tabular-nums}
 .counter .num{font-size:16px;font-weight:700;letter-spacing:-.02em}
 .counter .word{font-size:10px;color:rgba(255,255,255,.34)}
-.view-container{flex:1;min-height:0;position:relative;transform-origin:center center}
-.view{position:absolute;inset:0;display:flex;flex-direction:column;gap:2px;opacity:0;pointer-events:none}
-.view.active{opacity:1;pointer-events:auto}
+.view-container{flex:1;min-height:0;position:relative;transform-origin:center center;will-change:opacity}
+.view{position:absolute;inset:0;display:flex;flex-direction:column;gap:2px;opacity:0;pointer-events:none;content-visibility:hidden}
+.view.active{opacity:1;pointer-events:auto;content-visibility:visible}
 .month-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0}
 .month-nav button{width:40px;height:40px;border:0;background:rgba(255,255,255,.05);color:rgba(255,255,255,.62);border-radius:13px;font-size:20px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;line-height:1}
 .month-nav button:disabled{opacity:.16;cursor:default}
@@ -67,7 +67,6 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .dot[data-v="9"]{background:linear-gradient(145deg,#ffc94e,#d97e1a);box-shadow:0 0 10px rgba(255,180,60,.38)}
 .dot.today{outline:2px solid rgba(150,200,255,.85);outline-offset:1.5px}
 
-/* ===== CHART VIEW ===== */
 .chart-view{padding:4px 0 0}
 .period-tabs{display:flex;gap:5px;flex-shrink:0;padding:3px;background:rgba(255,255,255,.035);border-radius:12px;border:1px solid rgba(255,255,255,.05)}
 .period-tab{flex:1;padding:8px 4px;border:0;background:transparent;color:rgba(255,255,255,.5);font-size:12px;font-weight:600;font-family:inherit;border-radius:9px;cursor:pointer;letter-spacing:-.005em;transition:background .25s,color .25s}
@@ -99,10 +98,9 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .legend-swatch[data-v="7"]{background:linear-gradient(145deg,#4dd184,#1d8a52)}
 .legend-swatch[data-v="8"]{background:linear-gradient(145deg,#3fe0a3,#0daa6c)}
 .legend-swatch[data-v="9"]{background:linear-gradient(145deg,#ffc94e,#d97e1a)}
-.view-toggle,.chart-toggle{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:13px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:rgba(255,255,255,.72);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:background .2s,transform .15s,color .2s}
+.view-toggle,.chart-toggle{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:13px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:rgba(255,255,255,.72);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:background .2s,color .2s}
 .view-toggle{right:0}
 .chart-toggle{left:0}
-.view-toggle:active,.chart-toggle:active{transform:translateY(-50%) scale(.92);background:rgba(255,255,255,.12)}
 .chart-toggle.active{background:rgba(120,180,255,.15);color:#a8d4ff;border-color:rgba(120,180,255,.2)}
 .view-toggle svg{position:absolute;transition:opacity .4s cubic-bezier(.22,1,.36,1),transform .5s cubic-bezier(.22,1,.36,1)}
 .view-toggle .icon-year{opacity:0;transform:rotate(60deg) scale(.6)}
@@ -503,7 +501,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
       if(el.animate) el.animate([{transform:"scale(1)"},{transform:"scale(1.18)"},{transform:"scale(1)"}],{duration:420,easing:"cubic-bezier(.22,1,.36,1)"});
     }
     updateCounter();
-    if(currentView==="chart") renderChart();
+    renderChart();
   }
 
   backdrop.addEventListener("click", function(e){ if(e.target===backdrop) closeModal(); });
@@ -511,7 +509,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     if(e.key==="Escape"){ if(backdrop.classList.contains("open")) closeModal(); closeYearMenu(); }
   });
 
-  /* ===== VIEW SWITCH ===== */
+  /* ===== VIEW SWITCH — только fade контейнера, без волны ===== */
   var switching = false;
   function setView(mode){
     if(mode===currentView || switching) return;
@@ -520,26 +518,21 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 
     if(reduceMotion){ applyViewSwap(mode); switching = false; return; }
 
-    viewContainer.style.transition = "opacity 200ms cubic-bezier(.4,0,.2,1), transform 200ms cubic-bezier(.4,0,.2,1)";
+    viewContainer.style.transition = "opacity 200ms cubic-bezier(.4,0,.2,1)";
     viewContainer.style.opacity = "0";
-    viewContainer.style.transform = "scale(0.97)";
 
     setTimeout(function(){
       applyViewSwap(mode);
       void viewContainer.offsetWidth;
-      viewContainer.style.transition = "opacity 260ms cubic-bezier(.22,1,.36,1), transform 260ms cubic-bezier(.22,1,.36,1)";
+
+      viewContainer.style.transition = "opacity 280ms cubic-bezier(.22,1,.36,1)";
       viewContainer.style.opacity = "1";
-      viewContainer.style.transform = "scale(1)";
 
       setTimeout(function(){
         viewContainer.style.transition = "";
         viewContainer.style.opacity = "";
-        viewContainer.style.transform = "";
-        if(mode==="year") revealYearGrid();
-        else if(mode==="month") revealMonthGrid();
-        else if(mode==="chart") renderChart(true);
-        setTimeout(function(){ switching = false; }, 200);
-      }, 270);
+        switching = false;
+      }, 300);
     }, 210);
   }
   function applyViewSwap(mode){
@@ -599,7 +592,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
       viewYear--; updateYearNav(); updateCounter();
       if(currentView==="year"){ renderYearGrid(); revealYearGrid(); }
       else if(currentView==="month") renderMonthGrid();
-      else renderChart();
+      renderChart();
     }
   });
   nextBtn.addEventListener("click", function(){
@@ -607,7 +600,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
       viewYear++; updateYearNav(); updateCounter();
       if(currentView==="year"){ renderYearGrid(); revealYearGrid(); }
       else if(currentView==="month") renderMonthGrid();
-      else renderChart();
+      renderChart();
     }
   });
 
@@ -622,7 +615,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
           viewYear=yr; closeYearMenu(); updateYearNav(); updateCounter();
           if(currentView==="year"){ renderYearGrid(); revealYearGrid(); }
           else if(currentView==="month") renderMonthGrid();
-          else renderChart();
+          renderChart();
         });
         yearMenu.appendChild(b);
       })(y);
@@ -649,7 +642,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     chartPeriod = p;
     var tabs = periodTabs.querySelectorAll(".period-tab");
     for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle("active", tabs[i].dataset.period===p);
-    renderChart(true);
+    renderChart();
   });
 
   function getPeriodPoints(){
@@ -666,7 +659,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
         var key = keyOf(d.getFullYear(), d.getMonth(), d.getDate());
         pts.push({ date:d, key:key, value: data[key]!==undefined?data[key]:null });
       }
-    } else { // year
+    } else {
       for(var m=0;m<12;m++){
         var sum=0, cnt=0;
         var days = new Date(viewYear, m+1, 0).getDate();
@@ -680,7 +673,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     return pts;
   }
 
-  function renderChart(animate){
+  function renderChart(){
     var pts = getPeriodPoints();
     var hasAny = false;
     for(var i=0;i<pts.length;i++) if(pts[i].value!==null) { hasAny=true; break; }
@@ -695,7 +688,6 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     function yAt(h){ var t = (h-yMin)/(yMax-yMin); if(t<0)t=0; if(t>1)t=1; return padT + (1-t)*ch; }
 
     var html = "";
-    // gradient defs
     html += '<defs>';
     html += '<linearGradient id="lineG" x1="0%" y1="0%" x2="100%" y2="0%">';
     html += '<stop offset="0%" stop-color="#7dc0ff"/><stop offset="50%" stop-color="#a48cff"/><stop offset="100%" stop-color="#4dd184"/>';
@@ -705,18 +697,15 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     html += '</linearGradient>';
     html += '</defs>';
 
-    // grid
     var gridLevels = [5,6,7,8,9];
     for(var g=0; g<gridLevels.length; g++){
       var yv = yAt(gridLevels[g]);
       html += '<line x1="'+padL+'" y1="'+yv+'" x2="'+(W-padR)+'" y2="'+yv+'" stroke="rgba(255,255,255,0.045)" stroke-width="1"/>';
     }
-    // y labels
     html += '<text x="'+(padL-4)+'" y="'+(yAt(9)+3)+'" text-anchor="end" font-size="7" fill="rgba(255,255,255,0.28)" font-family="system-ui">9</text>';
     html += '<text x="'+(padL-4)+'" y="'+(yAt(7)+3)+'" text-anchor="end" font-size="7" fill="rgba(255,255,255,0.28)" font-family="system-ui">7</text>';
     html += '<text x="'+(padL-4)+'" y="'+(yAt(5)+3)+'" text-anchor="end" font-size="7" fill="rgba(255,255,255,0.28)" font-family="system-ui">5</text>';
 
-    // split into segments
     var segments = [], cur = [];
     for(var i=0;i<pts.length;i++){
       if(pts[i].value!==null && pts[i].value!==undefined){
@@ -727,21 +716,16 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     }
     if(cur.length) segments.push(cur);
 
-    // area + line for each segment
-    var pathsToAnimate = [];
     for(var s=0;s<segments.length;s++){
       var seg = segments[s];
       if(seg.length < 2) continue;
       var lineD = "M " + seg[0].x + " " + seg[0].y;
       for(var k=1;k<seg.length;k++) lineD += " L " + seg[k].x + " " + seg[k].y;
       var areaD = lineD + " L " + seg[seg.length-1].x + " " + (padT+ch) + " L " + seg[0].x + " " + (padT+ch) + " Z";
-
       html += '<path d="'+areaD+'" fill="url(#areaG)"/>';
-      html += '<path class="chart-line" d="'+lineD+'" fill="none" stroke="url(#lineG)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>';
-      pathsToAnimate.push(true);
+      html += '<path d="'+lineD+'" fill="none" stroke="url(#lineG)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>';
     }
 
-    // dots
     for(var i=0;i<pts.length;i++){
       if(pts[i].value===null||pts[i].value===undefined) continue;
       var isYear = chartPeriod==="year";
@@ -750,7 +734,6 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
       html += '<circle cx="'+xAt(i)+'" cy="'+yAt(pts[i].value)+'" r="'+(isYear?3.5:2.8)+'" fill="'+color+'" stroke="rgba(6,8,14,0.9)" stroke-width="1.2"/>';
     }
 
-    // x labels
     if(chartPeriod==="week"){
       for(var i=0;i<pts.length;i++){
         html += '<text x="'+xAt(i)+'" y="'+(H-6)+'" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.3)" font-family="system-ui">'+WEEKDAYS_SHORT[pts[i].date.getDay()]+'</text>';
@@ -770,24 +753,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 
     chartSvg.innerHTML = html;
 
-    // Line draw animation
-    if(animate && !reduceMotion){
-      var lines = chartSvg.querySelectorAll(".chart-line");
-      for(var L=0;L<lines.length;L++){
-        var line = lines[L];
-        try {
-          var len = line.getTotalLength();
-          line.style.strokeDasharray = len;
-          line.style.strokeDashoffset = len;
-          line.style.transition = "stroke-dashoffset 900ms cubic-bezier(.22,1,.36,1) " + (L*80) + "ms";
-          (function(el){ requestAnimationFrame(function(){ el.style.strokeDashoffset = "0"; }); })(line);
-        } catch(e){}
-      }
-    }
-
-    // Stats
     renderStats(pts);
-    // Insights
     renderInsights(pts);
   }
 
@@ -846,7 +812,6 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     }
     avgH /= filled.length;
 
-    // Средний сон
     if(avgH < 6.5){
       insights.push({ type:"warn", icon:"⚠️", text:"Средний сон "+avgH.toFixed(1)+"ч — ниже нормы. Старайся ложиться на 30–60 минут раньше." });
     } else if(avgH >= 7.5){
@@ -855,7 +820,6 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
       insights.push({ type:"neutral", icon:"📊", text:"Средний сон "+avgH.toFixed(1)+"ч. Есть куда расти до 7.5–8ч." });
     }
 
-    // По дням недели (только week/month)
     if(chartPeriod !== "year" && filled.length >= 5){
       var byDow = {};
       for(var i=0;i<filled.length;i++){
@@ -882,7 +846,6 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
       }
     }
 
-    // Плохие ночи
     var badCount = 0, redCount = 0;
     for(var i=0;i<filled.length;i++){
       var h = chartPeriod==="year" ? filled[i].value : valueToHours(filled[i].value);
@@ -895,7 +858,6 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
       insights.push({ type:"neutral", icon:"💡", text:badCount+" "+plural(badCount,["ночь","ночи","ночей"])+" с сном меньше 7ч. Недосып понемногу копится." });
     }
 
-    // Тренд (неделя/месяц)
     if(chartPeriod === "week" && filled.length >= 4){
       var firstHalf=0, firstN=0, secondHalf=0, secondN=0;
       var mid = Math.floor(filled.length/2);
@@ -906,13 +868,11 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
       else if(diff < -0.5) insights.push({ type:"warn", icon:"📉", text:"Сон ухудшается: вторая половина недели на "+Math.abs(diff).toFixed(1)+"ч хуже. Обрати внимание." });
     }
 
-    // Пропуски
     var missed = pts.length - filled.length;
     if(chartPeriod !== "year" && missed > pts.length * 0.4){
       insights.push({ type:"neutral", icon:"📝", text:missed+" из "+pts.length+" дней без записи. Чем больше данных, тем точнее анализ." });
     }
 
-    // Год — лучший/худший месяц
     if(chartPeriod === "year" && filled.length >= 3){
       var bestM = null, bestV = -1, worstM = null, worstV = 99;
       for(var i=0;i<filled.length;i++){
@@ -997,7 +957,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
       yearView.classList.remove("active"); monthView.classList.add("active");
       viewToggle.setAttribute("data-mode","month");
     }
-    renderChart(false);
+    renderChart();
     requestAnimationFrame(loaderTick);
   });
 
