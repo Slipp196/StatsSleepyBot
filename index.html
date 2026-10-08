@@ -103,26 +103,16 @@
   .counter .num { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }
   .counter .word { font-size: 10px; color: rgba(255,255,255,0.34); }
 
-  /* ===== VIEWS ===== */
+  /* ===== VIEWS: only one displayed at a time ===== */
   .view-container { flex: 1; min-height: 0; position: relative; }
   .view {
     position: absolute; inset: 0;
-    display: flex; flex-direction: column; gap: 2px;
-    opacity: 0;
-    transform: scale(0.96);
-    filter: blur(6px);
-    pointer-events: none;
-    will-change: opacity, transform, filter;
-    transition:
-      opacity 0.42s cubic-bezier(.22,1,.36,1),
-      transform 0.52s cubic-bezier(.22,1,.36,1),
-      filter 0.42s cubic-bezier(.22,1,.36,1);
+    display: none;
+    flex-direction: column; gap: 2px;
+    opacity: 1;
   }
   .view.active {
-    opacity: 1;
-    transform: scale(1);
-    filter: blur(0);
-    pointer-events: auto;
+    display: flex;
   }
 
   /* ===== MONTH ===== */
@@ -272,7 +262,7 @@
   .view-toggle[data-mode="month"] .icon-year { opacity: 1; transform: rotate(0deg) scale(1); }
   .view-toggle[data-mode="month"] .icon-month { opacity: 0; transform: rotate(-60deg) scale(0.6); }
 
-  /* ===== LOADER ===== */
+  /* ===== LOADER (no moon) ===== */
   .loader {
     position: fixed; inset: 0; z-index: 500;
     display: flex; flex-direction: column;
@@ -284,7 +274,7 @@
   }
   .loader::before {
     content: ""; position: absolute; inset: 0;
-    background: radial-gradient(700px 520px at 50% 42%, rgba(90, 130, 210, 0.13), transparent 65%);
+    background: radial-gradient(700px 520px at 50% 42%, rgba(90, 130, 210, 0.15), transparent 65%);
     pointer-events: none;
   }
   .loader.done {
@@ -292,12 +282,12 @@
     pointer-events: none;
   }
   .loader-svg {
-    width: 220px; height: 220px; display: block; overflow: visible;
+    width: 200px; height: 200px; display: block; overflow: visible;
     position: relative; z-index: 1;
   }
   .loader-hint {
     position: absolute;
-    top: calc(50% + 145px);
+    top: calc(50% + 130px);
     left: 50%;
     transform: translate(-50%, 14px);
     color: rgba(255,255,255,0.5);
@@ -307,9 +297,9 @@
     white-space: nowrap; pointer-events: none; z-index: 2;
   }
   .loader-hint.visible { opacity: 1; transform: translate(-50%, 0); }
-  .ldot-g { fill: #4dd184; }
-  .ldot-r { fill: #ef5a6e; }
-  .ldot-y { fill: #ffc94e; }
+  .ldot-g { fill: #4dd184; filter: drop-shadow(0 0 7px rgba(77,209,132,0.7)); }
+  .ldot-r { fill: #ef5a6e; filter: drop-shadow(0 0 7px rgba(239,90,110,0.7)); }
+  .ldot-y { fill: #ffc94e; filter: drop-shadow(0 0 7px rgba(255,201,78,0.7)); }
 
   /* ===== MODAL ===== */
   .modal-backdrop {
@@ -377,7 +367,6 @@
     transition: background 0.2s ease;
   }
   .delete-btn.show { display: block; }
-  .delete-btn:hover { background: rgba(255,70,92,0.16); }
 
   @media (max-width: 400px) {
     .day-grid { gap: 4px; } .dow-row { gap: 4px; font-size: 10px; }
@@ -385,8 +374,8 @@
     .month-nav button { width: 36px; height: 36px; font-size: 18px; }
     .legend { gap: 9px; font-size: 10px; }
     .view-toggle { width: 36px; height: 36px; border-radius: 12px; }
-    .loader-svg { width: 180px; height: 180px; }
-    .loader-hint { top: calc(50% + 125px); }
+    .loader-svg { width: 170px; height: 170px; }
+    .loader-hint { top: calc(50% + 115px); }
   }
   @media (min-width: 720px) {
     .day-grid { gap: 8px; } .dow-row { gap: 8px; }
@@ -399,7 +388,7 @@
 </head>
 <body>
 
-<!-- ===== LOADER ===== -->
+<!-- ===== LOADER (no moon) ===== -->
 <div class="loader" id="loader">
   <svg class="loader-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
     <defs>
@@ -408,39 +397,18 @@
         <stop offset="50%" stop-color="rgba(180,210,255,0.75)"/>
         <stop offset="100%" stop-color="rgba(235,242,255,1)"/>
       </linearGradient>
-      <linearGradient id="moonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#ffffff"/>
-        <stop offset="55%" stop-color="#d4dff2"/>
-        <stop offset="100%" stop-color="#8fa8d0"/>
-      </linearGradient>
-      <mask id="crescentMask" maskUnits="userSpaceOnUse" x="0" y="0" width="200" height="200">
-        <rect x="0" y="0" width="200" height="200" fill="black"/>
-        <!-- Outer moon circle CENTERED at (100,100). Inner cut shifted right. -->
-        <circle cx="100" cy="100" r="42" fill="white"/>
-        <circle cx="121" cy="99"  r="37" fill="black"/>
-      </mask>
-      <filter id="moonGlow" x="-40%" y="-40%" width="180%" height="180%">
-        <feGaussianBlur stdDeviation="3"/>
-      </filter>
     </defs>
 
     <!-- Track ring -->
-    <circle cx="100" cy="100" r="78" fill="none" stroke="rgba(255,255,255,0.055)" stroke-width="1.5"/>
+    <circle cx="100" cy="100" r="78" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.5"/>
 
     <!-- Spinning group: arc + 3 dots -->
     <g id="spinGroup">
       <path d="M 40.2 49.8 A 78 78 0 0 1 167.5 61"
             fill="none" stroke="url(#arcGrad)" stroke-width="2.5" stroke-linecap="round"/>
-      <circle class="ldot-g" cx="172.3" cy="70.8" r="5"/>
-      <circle class="ldot-r" cx="178"   cy="100"  r="5"/>
-      <circle class="ldot-y" cx="172.3" cy="129.2" r="5"/>
-    </g>
-
-    <!-- Moon -->
-    <g id="moonGroup">
-      <circle cx="100" cy="100" r="42" fill="#b8ccec" mask="url(#crescentMask)"
-              filter="url(#moonGlow)" opacity="0.5"/>
-      <circle cx="100" cy="100" r="42" fill="url(#moonGrad)" mask="url(#crescentMask)"/>
+      <circle class="ldot-g" cx="172.3" cy="70.8" r="5.5"/>
+      <circle class="ldot-r" cx="178"   cy="100"  r="5.5"/>
+      <circle class="ldot-y" cx="172.3" cy="129.2" r="5.5"/>
     </g>
   </svg>
 
@@ -472,7 +440,7 @@
   </header>
 
   <div class="view-container">
-    <div class="view month-view" id="monthView">
+    <div class="view month-view active" id="monthView">
       <div class="month-nav">
         <button id="prevMonth" type="button">‹</button>
         <div class="month-title" id="monthTitle">—</div>
@@ -569,7 +537,6 @@
   var loader      = document.getElementById("loader");
   var loaderHint  = document.getElementById("loaderHint");
   var spinGroup   = document.getElementById("spinGroup");
-  var moonGroup   = document.getElementById("moonGroup");
   var monthView   = document.getElementById("monthView");
   var yearView    = document.getElementById("yearView");
   var yearGrid    = document.getElementById("yearGrid");
@@ -648,7 +615,7 @@
     });
   }
 
-  /* ===== INITIAL REVEAL ANIMATION (only used once, after loader) ===== */
+  /* ===== ONE-TIME REVEAL ===== */
   function animateElementIn(el, delayMs) {
     if (!el || !el.animate || reduceMotion) return;
     el.animate(
@@ -681,7 +648,6 @@
   /* ===== RENDER: MONTH ===== */
   function renderMonthGrid() {
     monthTitle.textContent = MONTHS_FULL[viewMonth] + " " + viewYear;
-
     var atMin = (viewYear === THIS_YEAR - YEARS_BACK && viewMonth === 0);
     var atMax = (viewYear === THIS_YEAR && viewMonth === 11);
     prevMonthBtn.disabled = atMin;
@@ -911,18 +877,35 @@
     }
   });
 
-  /* ===== VIEW TOGGLE — just crossfade, no dot animation ===== */
+  /* ===== VIEW TOGGLE — display:none + JS fade-in ===== */
   function setView(mode) {
     if (mode === currentView) return;
     currentView = mode;
+
+    var incoming, outgoing;
     if (mode === "year") {
-      monthView.classList.remove("active");
-      yearView.classList.add("active");
+      outgoing = monthView;
+      incoming = yearView;
       viewToggle.setAttribute("data-mode", "year");
     } else {
-      yearView.classList.remove("active");
-      monthView.classList.add("active");
+      outgoing = yearView;
+      incoming = monthView;
       viewToggle.setAttribute("data-mode", "month");
+    }
+
+    // мгновенно убираем старый, показываем новый
+    outgoing.classList.remove("active");
+    incoming.classList.add("active");
+
+    // мягкое появление через JS (единственная анимация при переключении)
+    if (incoming.animate && !reduceMotion) {
+      incoming.animate(
+        [
+          { opacity: 0 },
+          { opacity: 1 }
+        ],
+        { duration: 380, easing: "cubic-bezier(.22,1,.36,1)" }
+      );
     }
   }
   viewToggle.addEventListener("click", function () {
@@ -1007,24 +990,17 @@
   dayGrid.addEventListener("mouseleave", onDayLeaveGrid);
   yearGrid.addEventListener("mouseleave", onDayLeaveGrid);
 
-  /* ===== LOADER ===== */
+  /* ===== LOADER (no moon) ===== */
   var loaderState = "spinning";
   var rotation = 0;
   var lastT = 0;
   var stopStartT = 0;
   var stopStartRotation = 0;
-  var moonPhase = 0;
 
   function loaderTick(now) {
     if (!lastT) lastT = now;
     var dt = Math.min(50, now - lastT);
     lastT = now;
-
-    // Moon breathe — pivot at (100, 100)
-    moonPhase += dt;
-    var moonScale = 1 + Math.sin(moonPhase / 1400) * 0.05;
-    moonGroup.setAttribute("transform",
-      "translate(100 100) scale(" + moonScale.toFixed(4) + ") translate(-100 -100)");
 
     if (loaderState === "spinning") {
       rotation += dt * 0.11;
@@ -1034,5 +1010,67 @@
       var elapsed = now - stopStartT;
       var duration = 1000;
       var t = Math.min(1, elapsed / duration);
-      // EaseOutCubic + затухающая синусоида = мягкое торможение с отскоком
-      var ease = 1 - Math.pow(1
+      var ease = 1 - Math.pow(1 - t, 3);
+      var osc = Math.sin(t * Math.PI * 4) * Math.exp(-t * 5) * 6;
+      rotation = stopStartRotation + 145 * ease + osc;
+      spinGroup.setAttribute("transform", "rotate(" + rotation.toFixed(2) + " 100 100)");
+
+      if (t >= 1) {
+        loaderState = "done";
+        finishLoading();
+        return;
+      }
+      requestAnimationFrame(loaderTick);
+    }
+  }
+
+  function finishLoading() {
+    loader.classList.add("done");
+    setTimeout(function () {
+      loader.style.display = "none";
+      app.classList.add("ready");
+      if (currentView === "month") revealMonthGrid();
+      else revealYearGrid();
+    }, 480);
+  }
+
+  setTimeout(function () {
+    if (loaderState === "spinning") loaderHint.classList.add("visible");
+  }, 900);
+
+  loader.addEventListener("click", function () {
+    if (loaderState !== "spinning") return;
+    loaderState = "stopping";
+    stopStartT = performance.now();
+    stopStartRotation = rotation;
+    loaderHint.classList.remove("visible");
+  });
+
+  /* ===== START ===== */
+  loadFromCloud(function () {
+    var isWide = window.matchMedia("(min-width: 720px)").matches;
+    currentView = isWide ? "year" : "month";
+
+    updateYearNav();
+    updateCounter();
+    updateDateDisplay(TODAY);
+    renderMonthGrid();
+    renderYearGrid();
+
+    if (currentView === "year") {
+      monthView.classList.remove("active");
+      yearView.classList.add("active");
+      viewToggle.setAttribute("data-mode", "year");
+    } else {
+      yearView.classList.remove("active");
+      monthView.classList.add("active");
+      viewToggle.setAttribute("data-mode", "month");
+    }
+
+    requestAnimationFrame(loaderTick);
+  });
+
+})();
+</script>
+</body>
+</html>
