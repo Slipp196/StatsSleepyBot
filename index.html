@@ -31,11 +31,9 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .counter{justify-self:end;display:flex;align-items:baseline;gap:3px;font-variant-numeric:tabular-nums}
 .counter .num{font-size:16px;font-weight:700;letter-spacing:-.02em}
 .counter .word{font-size:10px;color:rgba(255,255,255,.34)}
-.view-container{flex:1;min-height:0;position:relative}
-/* Обе view всегда в DOM. Переключение — только через opacity.
-   Это даёт чистый кроссфейд без дёрганья. */
-.view{position:absolute;inset:0;display:flex;flex-direction:column;gap:2px;opacity:0;pointer-events:none;transition:opacity .4s cubic-bezier(.22,1,.36,1);z-index:1}
-.view.active{opacity:1;pointer-events:auto;z-index:2}
+.view-container{flex:1;min-height:0;position:relative;transform-origin:center center;will-change:opacity,transform}
+.view{position:absolute;inset:0;display:flex;flex-direction:column;gap:2px;opacity:0;pointer-events:none}
+.view.active{opacity:1;pointer-events:auto}
 .month-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0}
 .month-nav button{width:40px;height:40px;border:0;background:rgba(255,255,255,.05);color:rgba(255,255,255,.62);border-radius:13px;font-size:20px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;line-height:1;transition:background .2s,transform .15s,opacity .2s}
 .month-nav button:active:not(:disabled){transform:scale(.94);background:rgba(255,255,255,.12)}
@@ -163,7 +161,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     <div class="counter"><span class="num" id="countNum">0</span><span class="word" id="countWord">ночей</span></div>
   </header>
 
-  <div class="view-container">
+  <div class="view-container" id="viewContainer">
     <div class="view month-view active" id="monthView">
       <div class="month-nav">
         <button id="prevMonth" type="button">‹</button>
@@ -239,6 +237,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
   var loader = document.getElementById("loader");
   var loaderHint = document.getElementById("loaderHint");
   var spinGroup = document.getElementById("spinGroup");
+  var viewContainer = document.getElementById("viewContainer");
   var monthView = document.getElementById("monthView");
   var yearView = document.getElementById("yearView");
   var yearGrid = document.getElementById("yearGrid");
@@ -278,7 +277,6 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     tg.CloudStorage.setItem(CLOUD_KEY,json,function(err){ if(err)console.error("Cloud save:",err); });
   }
 
-  /* Мягкая волна появления элементов. Без blur — он жрёт GPU и создаёт дёрганье. */
   function animateElementIn(el, delayMs){
     if(!el||!el.animate||reduceMotion) return;
     el.style.opacity = "0";
@@ -476,10 +474,46 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     if(e.key==="Escape"){ if(backdrop.classList.contains("open")) closeModal(); closeYearMenu(); }
   });
 
-  /* ===== VIEW SWITCH — только CSS-переход opacity. Ноль дёрганья. ===== */
+  /* ============================================================
+     ПЕРЕКЛЮЧЕНИЕ ВИДА — анимируем ОДИН контейнер.
+     Фаза 1: контейнер плавно гаснет + чуть уменьшается
+     Фаза 2: пока невидим — мгновенно меняем активную view
+     Фаза 3: контейнер плавно возвращается
+     ============================================================ */
+  var switching = false;
   function setView(mode){
-    if(mode===currentView) return;
-    currentView=mode;
+    if(mode===currentView || switching) return;
+    switching = true;
+
+    if(reduceMotion){
+      applyViewSwap(mode);
+      switching = false;
+      return;
+    }
+
+    viewContainer.style.transition = "opacity 200ms cubic-bezier(.4,0,.2,1), transform 200ms cubic-bezier(.4,0,.2,1)";
+    viewContainer.style.opacity = "0";
+    viewContainer.style.transform = "scale(0.97)";
+
+    setTimeout(function(){
+      applyViewSwap(mode);
+      // принудительный reflow, чтобы браузер зафиксировал смену view пока невидим
+      void viewContainer.offsetWidth;
+
+      viewContainer.style.transition = "opacity 260ms cubic-bezier(.22,1,.36,1), transform 260ms cubic-bezier(.22,1,.36,1)";
+      viewContainer.style.opacity = "1";
+      viewContainer.style.transform = "scale(1)";
+
+      setTimeout(function(){
+        viewContainer.style.transition = "";
+        viewContainer.style.opacity = "";
+        viewContainer.style.transform = "";
+        switching = false;
+      }, 280);
+    }, 210);
+  }
+  function applyViewSwap(mode){
+    currentView = mode;
     if(mode==="year"){
       monthView.classList.remove("active");
       yearView.classList.add("active");
@@ -519,7 +553,6 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     else { if(!nextMonthBtn.disabled) nextMonthBtn.click(); }
   },{passive:true});
 
-  /* ===== YEAR NAV ===== */
   prevBtn.addEventListener("click", function(){
     if(viewYear-1>=THIS_YEAR-YEARS_BACK){
       viewYear--; updateYearNav(); updateCounter();
@@ -612,7 +645,6 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     loaderHint.classList.remove("visible");
   });
 
-  /* ===== START ===== */
   loadFromCloud(function(){
     var isWide = window.matchMedia("(min-width:720px)").matches;
     currentView = isWide ? "year" : "month";
