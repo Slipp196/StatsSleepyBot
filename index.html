@@ -474,12 +474,6 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     if(e.key==="Escape"){ if(backdrop.classList.contains("open")) closeModal(); closeYearMenu(); }
   });
 
-  /* ============================================================
-     ПЕРЕКЛЮЧЕНИЕ ВИДА — анимируем ОДИН контейнер.
-     Фаза 1: контейнер плавно гаснет + чуть уменьшается
-     Фаза 2: пока невидим — мгновенно меняем активную view
-     Фаза 3: контейнер плавно возвращается
-     ============================================================ */
   var switching = false;
   function setView(mode){
     if(mode===currentView || switching) return;
@@ -491,15 +485,17 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
       return;
     }
 
+    // Фаза 1: контейнер плавно гаснет
     viewContainer.style.transition = "opacity 200ms cubic-bezier(.4,0,.2,1), transform 200ms cubic-bezier(.4,0,.2,1)";
     viewContainer.style.opacity = "0";
     viewContainer.style.transform = "scale(0.97)";
 
     setTimeout(function(){
+      // Фаза 2: пока невидим — мгновенно меняем view
       applyViewSwap(mode);
-      // принудительный reflow, чтобы браузер зафиксировал смену view пока невидим
       void viewContainer.offsetWidth;
 
+      // Фаза 3: контейнер плавно возвращается
       viewContainer.style.transition = "opacity 260ms cubic-bezier(.22,1,.36,1), transform 260ms cubic-bezier(.22,1,.36,1)";
       viewContainer.style.opacity = "1";
       viewContainer.style.transform = "scale(1)";
@@ -508,8 +504,14 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
         viewContainer.style.transition = "";
         viewContainer.style.opacity = "";
         viewContainer.style.transform = "";
-        switching = false;
-      }, 280);
+
+        // Фаза 4: теперь, когда контейнер полностью видим — запускаем волну
+        if(mode==="year") revealYearGrid();
+        else revealMonthGrid();
+
+        // Разблокируем кнопку чуть позже, чтобы не поймать двойной тап
+        setTimeout(function(){ switching = false; }, 200);
+      }, 270);
     }, 210);
   }
   function applyViewSwap(mode){
@@ -524,9 +526,6 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
       viewToggle.setAttribute("data-mode","month");
     }
   }
-  viewToggle.addEventListener("click", function(){
-    setView(currentView==="month"?"year":"month");
-  });
 
   /* ===== MONTH NAV ===== */
   prevMonthBtn.addEventListener("click", function(){
