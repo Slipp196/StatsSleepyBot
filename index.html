@@ -469,19 +469,46 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     if(e.key==="Escape"){ if(backdrop.classList.contains("open")) closeModal(); closeYearMenu(); }
   });
 
+  /* ===== VIEW SWITCH — заметная анимация, только один view в DOM ===== */
   function setView(mode){
     if(mode===currentView) return;
     currentView=mode;
+
     var incoming, outgoing;
-    if(mode==="year"){ outgoing=monthView; incoming=yearView; viewToggle.setAttribute("data-mode","year"); }
-    else { outgoing=yearView; incoming=monthView; viewToggle.setAttribute("data-mode","month"); }
+    if(mode==="year"){
+      outgoing=monthView; incoming=yearView;
+      viewToggle.setAttribute("data-mode","year");
+    } else {
+      outgoing=yearView; incoming=monthView;
+      viewToggle.setAttribute("data-mode","month");
+    }
+
+    // Мгновенно убираем старый, показываем новый
     outgoing.classList.remove("active");
     incoming.classList.add("active");
+
+    // Красивое появление: снизу-вверх + лёгкий scale + fade
     if(incoming.animate && !reduceMotion){
-      incoming.animate([{opacity:0},{opacity:1}],{duration:380,easing:"cubic-bezier(.22,1,.36,1)"});
+      incoming.animate(
+        [
+          { opacity: 0, transform: "translateY(18px) scale(0.96)" },
+          { opacity: 1, transform: "translateY(0) scale(1)" }
+        ],
+        { duration: 480, easing: "cubic-bezier(.22,1,.36,1)" }
+      );
+    }
+
+    // Лёгкая волна содержимого появляется сразу за блоком
+    if(!reduceMotion){
+      setTimeout(function(){
+        if(mode==="year") revealYearGrid();
+        else revealMonthGrid();
+      }, 80);
     }
   }
-  viewToggle.addEventListener("click", function(){ setView(currentView==="month"?"year":"month"); });
+  viewToggle.addEventListener("click", function(){
+    setView(currentView==="month"?"year":"month");
+  });
 
   prevMonthBtn.addEventListener("click", function(){
     if(viewMonth===0){ if(viewYear-1>=THIS_YEAR-YEARS_BACK){ viewYear--; viewMonth=11; } } else viewMonth--;
@@ -599,7 +626,6 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     loaderHint.classList.remove("visible");
   });
 
-  /* ===== START ===== */
   loadFromCloud(function(){
     var isWide = window.matchMedia("(min-width:720px)").matches;
     currentView = isWide ? "year" : "month";
