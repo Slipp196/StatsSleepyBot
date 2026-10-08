@@ -37,7 +37,8 @@
     padding-top: max(8px, env(safe-area-inset-top, 0px));
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
     gap: 5px; max-width: 1100px; margin: 0 auto; width: 100%;
-    opacity: 0; transition: opacity 0.55s cubic-bezier(.22,1,.36,1);
+    opacity: 0;
+    transition: opacity 0.55s cubic-bezier(.22,1,.36,1);
   }
   .app.ready { opacity: 1; }
 
@@ -102,15 +103,26 @@
   .counter .num { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }
   .counter .word { font-size: 10px; color: rgba(255,255,255,0.34); }
 
-  /* ===== VIEWS ===== */
+  /* ===== VIEWS (with crossfade + blur + scale) ===== */
   .view-container { flex: 1; min-height: 0; position: relative; }
   .view {
     position: absolute; inset: 0;
     display: flex; flex-direction: column; gap: 2px;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.32s cubic-bezier(.22,1,.36,1);
+    opacity: 0;
+    transform: scale(0.965) translateY(6px);
+    filter: blur(5px);
+    pointer-events: none;
+    transition:
+      opacity 0.42s cubic-bezier(.22,1,.36,1),
+      transform 0.52s cubic-bezier(.22,1,.36,1),
+      filter 0.42s cubic-bezier(.22,1,.36,1);
   }
-  .view.active { opacity: 1; pointer-events: auto; }
+  .view.active {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+    pointer-events: auto;
+  }
 
   /* ===== MONTH ===== */
   .month-nav {
@@ -265,9 +277,9 @@
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     background: #06080e; cursor: pointer;
-    transition: opacity 0.8s cubic-bezier(.22,1,.36,1),
-                transform 0.8s cubic-bezier(.22,1,.36,1),
-                filter 0.8s cubic-bezier(.22,1,.36,1);
+    transition: opacity 0.85s cubic-bezier(.22,1,.36,1),
+                transform 0.85s cubic-bezier(.22,1,.36,1),
+                filter 0.85s cubic-bezier(.22,1,.36,1);
   }
   .loader::before {
     content: ""; position: absolute; inset: 0;
@@ -320,18 +332,37 @@
   }
   .modal-backdrop.open .modal { transform: translateY(0) scale(1); opacity: 1; }
   .modal-date { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-  .modal-q { font-size: 11px; color: rgba(255,255,255,0.45); }
+  .modal-q {
+    font-size: 11px; color: rgba(255,255,255,0.5);
+    transition: color 0.3s ease;
+    min-height: 14px;
+  }
+  .modal-q.confirm {
+    color: rgba(150, 200, 255, 0.9);
+    font-weight: 600;
+    letter-spacing: 0.005em;
+  }
   .options { display: flex; gap: 5px; margin-top: 16px; }
   .opt {
     flex: 1 1 0; min-width: 0; padding: 14px 3px;
     border: 0; border-radius: 14px;
     font-size: 14px; font-weight: 700; font-family: inherit;
-    cursor: pointer; opacity: 0.55;
+    cursor: pointer; opacity: 0.42;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.22);
-    transition: opacity 0.25s ease, transform 0.25s cubic-bezier(.22,1,.36,1), box-shadow 0.25s ease;
+    transition:
+      opacity 0.3s cubic-bezier(.22,1,.36,1),
+      transform 0.35s cubic-bezier(.22,1,.36,1),
+      box-shadow 0.35s cubic-bezier(.22,1,.36,1);
   }
   .opt:active { transform: scale(0.95); }
-  .opt.selected { opacity: 1; box-shadow: 0 0 0 2px rgba(255,255,255,0.78), inset 0 1px 0 rgba(255,255,255,0.3); }
+  .opt.selected {
+    opacity: 1;
+    transform: translateY(-2px);
+    box-shadow:
+      0 0 0 2px rgba(255,255,255,0.85),
+      0 8px 22px -8px rgba(0,0,0,0.9),
+      inset 0 1px 0 rgba(255,255,255,0.35);
+  }
   .opt[data-v="5"] { background: linear-gradient(145deg, #ef5a6e, #a11d34); color: #fff; }
   .opt[data-v="6"] { background: linear-gradient(145deg, #33a06d, #155439); color: #e8fff4; }
   .opt[data-v="7"] { background: linear-gradient(145deg, #4dd184, #1d8a52); color: #052e1b; }
@@ -345,6 +376,7 @@
     transition: background 0.2s ease;
   }
   .delete-btn.show { display: block; }
+  .delete-btn:hover { background: rgba(255,70,92,0.16); }
 
   @media (max-width: 400px) {
     .day-grid { gap: 4px; } .dow-row { gap: 4px; font-size: 10px; }
@@ -380,10 +412,11 @@
         <stop offset="55%" stop-color="#d4dff2"/>
         <stop offset="100%" stop-color="#8fa8d0"/>
       </linearGradient>
-      <mask id="crescentMask">
+      <mask id="crescentMask" maskUnits="userSpaceOnUse" x="0" y="0" width="200" height="200">
         <rect x="0" y="0" width="200" height="200" fill="black"/>
-        <circle cx="100" cy="100" r="40" fill="white"/>
-        <circle cx="121" cy="99" r="37" fill="black"/>
+        <!-- shifted right to compensate the crescent's visual weight -->
+        <circle cx="118" cy="100" r="42" fill="white"/>
+        <circle cx="140" cy="99"  r="39" fill="black"/>
       </mask>
       <filter id="moonGlow" x="-40%" y="-40%" width="180%" height="180%">
         <feGaussianBlur stdDeviation="3"/>
@@ -395,20 +428,18 @@
 
     <!-- Spinning group: arc + 3 dots -->
     <g id="spinGroup">
-      <!-- Bright arc from ~-140° to ~-30° -->
       <path d="M 40.2 49.8 A 78 78 0 0 1 167.5 61"
             fill="none" stroke="url(#arcGrad)" stroke-width="2.5" stroke-linecap="round"/>
-      <!-- Dots on the ring, right side, stacked vertically -->
       <circle class="ldot-g" cx="172.3" cy="70.8" r="5"/>
       <circle class="ldot-r" cx="178"   cy="100"  r="5"/>
       <circle class="ldot-y" cx="172.3" cy="129.2" r="5"/>
     </g>
 
-    <!-- Moon (static, breathes) -->
+    <!-- Moon (masked, shifted right visually) -->
     <g id="moonGroup">
-      <circle cx="100" cy="100" r="40" fill="#b8ccec" mask="url(#crescentMask)"
+      <circle cx="118" cy="100" r="42" fill="#b8ccec" mask="url(#crescentMask)"
               filter="url(#moonGlow)" opacity="0.5"/>
-      <circle cx="100" cy="100" r="40" fill="url(#moonGrad)" mask="url(#crescentMask)"/>
+      <circle cx="118" cy="100" r="42" fill="url(#moonGrad)" mask="url(#crescentMask)"/>
     </g>
   </svg>
 
@@ -490,7 +521,7 @@
 <div class="modal-backdrop" id="backdrop">
   <div class="modal" role="dialog">
     <div class="modal-date" id="modalDate"></div>
-    <div class="modal-q">Сколько часов вы спали этой ночью?</div>
+    <div class="modal-q" id="modalQ">Сколько часов вы спали этой ночью?</div>
     <div class="options" id="options">
       <button class="opt" data-v="5">&lt;6</button>
       <button class="opt" data-v="6">6</button>
@@ -529,8 +560,9 @@
   var viewYear    = THIS_YEAR;
   var viewMonth   = TODAY.getMonth();
   var activeKey   = null;
+  var pendingValue = null;
+  var awaitingConfirm = false;
   var currentView = "month";
-  var appReady    = false;
 
   // DOM
   var app         = document.getElementById("app");
@@ -552,6 +584,7 @@
   var dateDisplay = document.getElementById("dateDisplay");
   var backdrop    = document.getElementById("backdrop");
   var modalDate   = document.getElementById("modalDate");
+  var modalQ      = document.getElementById("modalQ");
   var optionsEl   = document.getElementById("options");
   var deleteBtn   = document.getElementById("deleteBtn");
   var monthTitle  = document.getElementById("monthTitle");
@@ -559,7 +592,7 @@
   var nextMonthBtn= document.getElementById("nextMonth");
   var viewToggle  = document.getElementById("viewToggle");
 
-  /* ============ UTILS ============ */
+  /* ===== UTILS ===== */
   function keyOf(y, m, d) {
     return y + "-" + String(m+1).padStart(2, "0") + "-" + String(d).padStart(2, "0");
   }
@@ -589,7 +622,7 @@
                            : (wd + ", " + d + " " + m + " " + y);
   }
 
-  /* ============ CLOUD ============ */
+  /* ===== CLOUD ===== */
   function loadFromCloud(cb) {
     if (!tg || !tg.CloudStorage) {
       try {
@@ -617,7 +650,7 @@
     });
   }
 
-  /* ============ ENTRY ANIMATIONS ============ */
+  /* ===== ENTRY ANIMATIONS ===== */
   function animateElementIn(el, delayMs) {
     if (!el || !el.animate || reduceMotion) return;
     if (el._sleepAnim) { try { el._sleepAnim.cancel(); } catch(e){} }
@@ -650,7 +683,7 @@
     }
   }
 
-  /* ============ RENDER: MONTH ============ */
+  /* ===== RENDER: MONTH ===== */
   function renderMonthGrid() {
     monthTitle.textContent = MONTHS_FULL[viewMonth] + " " + viewYear;
 
@@ -705,7 +738,7 @@
     if (key === TODAY_KEY) el.classList.add("today");
   }
 
-  /* ============ RENDER: YEAR ============ */
+  /* ===== RENDER: YEAR ===== */
   function renderYearGrid() {
     yearGrid.innerHTML = "";
     var frag = document.createDocumentFragment();
@@ -765,7 +798,7 @@
     if (key === TODAY_KEY) el.classList.add("today");
   }
 
-  /* ============ SHARED ============ */
+  /* ===== SHARED ===== */
   function updateCounter() {
     var prefix = viewYear + "-";
     var n = 0;
@@ -805,33 +838,61 @@
     openModal(key, dt);
   }
 
-  /* ============ MODAL ============ */
+  /* ===== MODAL (two-step confirm) ===== */
   function openModal(key, dt) {
     activeKey = key;
-    modalDate.textContent = formatDate(dt);
     var current = data[key];
-    var opts = optionsEl.querySelectorAll(".opt");
-    for (var i = 0; i < opts.length; i++) {
-      opts[i].classList.toggle("selected", Number(opts[i].dataset.v) === current);
-    }
-    deleteBtn.classList.toggle("show", current !== undefined);
+
+    pendingValue = (current !== undefined && current !== null) ? current : null;
+    awaitingConfirm = false;
+
+    modalDate.textContent = formatDate(dt);
+    modalQ.textContent = "Сколько часов вы спали этой ночью?";
+    modalQ.classList.remove("confirm");
+
+    updateOptionsVisual();
+    deleteBtn.classList.toggle("show", current !== undefined && current !== null);
     backdrop.classList.add("open");
   }
+
+  function updateOptionsVisual() {
+    var opts = optionsEl.querySelectorAll(".opt");
+    for (var i = 0; i < opts.length; i++) {
+      var v = Number(opts[i].dataset.v);
+      opts[i].classList.toggle("selected", v === pendingValue);
+    }
+  }
+
   function closeModal() {
     backdrop.classList.remove("open");
     activeKey = null;
+    pendingValue = null;
+    awaitingConfirm = false;
     updateDateDisplay(TODAY);
   }
 
   optionsEl.addEventListener("click", function (e) {
     var btn = e.target.closest(".opt");
     if (!btn || !activeKey) return;
-    var key = activeKey;
-    data[key] = Number(btn.dataset.v);
-    saveToCloud();
-    patchDay(key);
-    closeModal();
+    var val = Number(btn.dataset.v);
+
+    // Второй клик по тому же значению — подтверждение
+    if (awaitingConfirm && pendingValue === val) {
+      data[activeKey] = val;
+      saveToCloud();
+      patchDay(activeKey);
+      closeModal();
+      return;
+    }
+
+    // Первый клик (или смена значения)
+    pendingValue = val;
+    awaitingConfirm = true;
+    updateOptionsVisual();
+    modalQ.textContent = "Нажмите ещё раз, чтобы подтвердить";
+    modalQ.classList.add("confirm");
   });
+
   deleteBtn.addEventListener("click", function () {
     if (!activeKey) return;
     var key = activeKey;
@@ -871,28 +932,28 @@
     }
   });
 
-  /* ============ VIEW TOGGLE ============ */
-  function setView(mode, animate) {
-    if (mode === currentView && animate !== "force") return;
+  /* ===== VIEW TOGGLE (with crossfade) ===== */
+  function setView(mode) {
+    if (mode === currentView) return;
     currentView = mode;
 
     if (mode === "year") {
       monthView.classList.remove("active");
       yearView.classList.add("active");
       viewToggle.setAttribute("data-mode", "year");
-      if (animate !== false) animateYearGrid();
+      setTimeout(animateYearGrid, 220);
     } else {
       yearView.classList.remove("active");
       monthView.classList.add("active");
       viewToggle.setAttribute("data-mode", "month");
-      if (animate !== false) animateMonthGrid();
+      setTimeout(animateMonthGrid, 220);
     }
   }
   viewToggle.addEventListener("click", function () {
-    setView(currentView === "month" ? "year" : "month", true);
+    setView(currentView === "month" ? "year" : "month");
   });
 
-  /* ============ MONTH NAV ============ */
+  /* ===== MONTH NAV ===== */
   prevMonthBtn.addEventListener("click", function () {
     if (viewMonth === 0) {
       if (viewYear - 1 >= THIS_YEAR - YEARS_BACK) { viewYear--; viewMonth = 11; }
@@ -925,7 +986,7 @@
     else        { if (!nextMonthBtn.disabled) nextMonthBtn.click(); }
   }, { passive: true });
 
-  /* ============ YEAR NAV ============ */
+  /* ===== YEAR NAV ===== */
   prevBtn.addEventListener("click", function () {
     if (viewYear - 1 >= THIS_YEAR - YEARS_BACK) {
       viewYear--; updateYearNav(); updateCounter();
@@ -969,42 +1030,45 @@
     if (!yearMenu.contains(e.target) && !yearBtn.contains(e.target)) closeYearMenu();
   });
 
-  // Hover leave reset
   dayGrid.addEventListener("mouseleave", onDayLeaveGrid);
   yearGrid.addEventListener("mouseleave", onDayLeaveGrid);
 
-  /* ============ LOADER LOGIC ============ */
-  var loaderState = "spinning"; // spinning | stopping | done
+  /* ===== LOADER ===== */
+  var loaderState = "spinning";
   var rotation = 0;
   var lastT = 0;
   var stopStartT = 0;
   var stopStartRotation = 0;
   var moonPhase = 0;
 
+  function easeOutBack(t) {
+    var c1 = 1.70158;
+    var c3 = c1 + 1;
+    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+  }
+
   function loaderTick(now) {
     if (!lastT) lastT = now;
-    var dt = Math.min(50, now - lastT); // cap delta for smoothness
+    var dt = Math.min(50, now - lastT);
     lastT = now;
 
-    // Moon breathing
+    // Moon breathe
     moonPhase += dt;
     var moonScale = 1 + Math.sin(moonPhase / 1400) * 0.045;
     moonGroup.setAttribute("transform",
-      "translate(100 100) scale(" + moonScale.toFixed(4) + ") translate(-100 -100)");
+      "translate(118 100) scale(" + moonScale.toFixed(4) + ") translate(-118 -100)");
 
     if (loaderState === "spinning") {
-      rotation += dt * 0.11; // ~110 deg/sec
+      rotation += dt * 0.11;
       spinGroup.setAttribute("transform", "rotate(" + rotation.toFixed(2) + " 100 100)");
       requestAnimationFrame(loaderTick);
     } else if (loaderState === "stopping") {
       var elapsed = now - stopStartT;
-      var duration = 950;
+      var duration = 1050;
       var t = Math.min(1, elapsed / duration);
-      // easeOutCubic for main deceleration
-      var ease = 1 - Math.pow(1 - t, 3);
-      // damped oscillation for the "hit" bounce
-      var osc = Math.sin(t * Math.PI * 3.2) * Math.exp(-t * 5) * 7;
-      rotation = stopStartRotation + 130 * ease + osc;
+      var ease = easeOutBack(t);
+      var osc = Math.sin(t * Math.PI * 5) * Math.exp(-t * 5.5) * 6;
+      rotation = stopStartRotation + 145 * ease + osc;
       spinGroup.setAttribute("transform", "rotate(" + rotation.toFixed(2) + " 100 100)");
 
       if (t >= 1) {
@@ -1021,19 +1085,15 @@
     setTimeout(function () {
       loader.style.display = "none";
       app.classList.add("ready");
-      appReady = true;
-      // Trigger view grid animation
       if (currentView === "month") animateMonthGrid();
       else animateYearGrid();
-    }, 450);
+    }, 480);
   }
 
-  // Show hint
   setTimeout(function () {
     if (loaderState === "spinning") loaderHint.classList.add("visible");
   }, 900);
 
-  // Click to start
   loader.addEventListener("click", function () {
     if (loaderState !== "spinning") return;
     loaderState = "stopping";
@@ -1042,11 +1102,10 @@
     loaderHint.classList.remove("visible");
   });
 
-  /* ============ START ============ */
+  /* ===== START ===== */
   loadFromCloud(function () {
-    // Decide initial view based on width
     var isWide = window.matchMedia("(min-width: 720px)").matches;
-    if (isWide) currentView = "year"; else currentView = "month";
+    currentView = isWide ? "year" : "month";
 
     updateYearNav();
     updateCounter();
@@ -1054,7 +1113,6 @@
     renderMonthGrid();
     renderYearGrid();
 
-    // Set active view WITHOUT animation (loader is on top)
     if (currentView === "year") {
       monthView.classList.remove("active");
       yearView.classList.add("active");
@@ -1065,7 +1123,6 @@
       viewToggle.setAttribute("data-mode", "month");
     }
 
-    // Start loader animation
     requestAnimationFrame(loaderTick);
   });
 
