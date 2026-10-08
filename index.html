@@ -39,6 +39,7 @@
     pointer-events: none;
   }
 
+  /* ============ APP ============ */
   .app {
     height: 100vh;
     height: 100dvh;
@@ -46,12 +47,14 @@
     flex-direction: column;
     padding: 8px 12px 6px;
     padding-top: max(8px, env(safe-area-inset-top, 0px));
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
-    gap: 8px;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+    gap: 6px;
     max-width: 1100px;
     margin: 0 auto;
     width: 100%;
+    opacity: 0;
   }
+  .app.ready { opacity: 1; }
 
   /* ============ HEADER ============ */
   .header {
@@ -62,13 +65,15 @@
     gap: 8px;
     min-height: 30px;
   }
-
-  .year-nav {
-    display: flex;
-    align-items: center;
-    gap: 1px;
-    justify-self: start;
+  .app.ready .header {
+    animation: slideDownIn 700ms cubic-bezier(.22,1,.36,1) 60ms backwards;
   }
+  @keyframes slideDownIn {
+    from { opacity: 0; transform: translateY(-14px); filter: blur(2px); }
+    to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+  }
+
+  .year-nav { display: flex; align-items: center; gap: 1px; justify-self: start; }
   .year-nav > button {
     background: none;
     border: none;
@@ -86,10 +91,7 @@
     line-height: 1;
     transition: background 0.2s, color 0.2s;
   }
-  .year-nav > button:hover:not(:disabled) {
-    background: rgba(255,255,255,0.07);
-    color: #fff;
-  }
+  .year-nav > button:hover:not(:disabled) { background: rgba(255,255,255,0.07); color: #fff; }
   .year-nav > button:disabled { opacity: 0.16; cursor: default; }
 
   .year-wrap { position: relative; }
@@ -148,7 +150,6 @@
     font-family: inherit;
     transition: background 0.15s, color 0.15s;
   }
-  .year-menu button:hover { background: rgba(255,255,255,0.07); color: #fff; }
   .year-menu button.active { background: rgba(120,180,255,0.13); color: #a8d4ff; }
 
   .date-display {
@@ -160,7 +161,6 @@
     font-variant-numeric: tabular-nums;
     overflow: hidden;
     text-overflow: ellipsis;
-    transition: opacity 0.25s ease;
   }
 
   .counter {
@@ -174,30 +174,17 @@
   .counter .word { font-size: 10px; color: rgba(255,255,255,0.34); }
 
   /* ============ VIEWS ============ */
-  .view-container {
-    flex: 1;
-    min-height: 0;
-    position: relative;
-  }
-
+  .view-container { flex: 1; min-height: 0; position: relative; }
   .view {
     position: absolute;
     inset: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 5px;
     opacity: 0;
-    transform: scale(0.985);
     pointer-events: none;
-    transition:
-      opacity 0.45s cubic-bezier(.22,1,.36,1),
-      transform 0.55s cubic-bezier(.22,1,.36,1);
   }
-  .view.active {
-    opacity: 1;
-    transform: scale(1);
-    pointer-events: auto;
-  }
+  .view.active { opacity: 1; pointer-events: auto; }
 
   /* ============ MONTH VIEW ============ */
   .month-nav {
@@ -241,22 +228,21 @@
   .dow-row {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
+    gap: 5px;
     flex-shrink: 0;
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.22);
+    color: rgba(255,255,255,0.28);
     text-align: center;
-    padding: 0 2px;
   }
 
   .day-grid-wrap {
     flex: 1;
     min-height: 0;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
   }
 
@@ -264,7 +250,7 @@
     width: 100%;
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
+    gap: 5px;
   }
 
   .day-cell {
@@ -289,11 +275,8 @@
       background 0.18s ease,
       box-shadow 0.18s ease,
       color 0.18s ease;
-    -webkit-user-select: none;
-    user-select: none;
   }
   .day-cell.blank { visibility: hidden; }
-
   .day-cell.editable {
     background: rgba(255,255,255,0.06);
     color: rgba(255,255,255,0.72);
@@ -304,31 +287,20 @@
     background: rgba(255,255,255,0.14);
     color: #fff;
   }
-
-  .day-cell.future {
-    background: transparent;
-    color: rgba(255,255,255,0.10);
-  }
-
+  .day-cell.future { background: transparent; color: rgba(255,255,255,0.10); }
   .day-cell.locked {
     background:
       repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0 2px, transparent 2px 6px),
       rgba(255,255,255,0.012);
     color: rgba(255,255,255,0.22);
   }
-
   .day-cell[data-v="5"] { background: linear-gradient(150deg, #e35a6e, #a11d34); color: #fff; box-shadow: 0 6px 18px -6px rgba(230,70,100,0.55); }
   .day-cell[data-v="6"] { background: linear-gradient(150deg, #33a06d, #155439); color: #eafff4; box-shadow: 0 6px 18px -6px rgba(50,160,110,0.5); }
   .day-cell[data-v="7"] { background: linear-gradient(150deg, #4dd184, #1d8a52); color: #04301c; box-shadow: 0 6px 18px -6px rgba(70,200,130,0.55); }
   .day-cell[data-v="8"] { background: linear-gradient(150deg, #3fe0a3, #0daa6c); color: #04301c; box-shadow: 0 6px 20px -6px rgba(70,220,160,0.6); }
   .day-cell[data-v="9"] { background: linear-gradient(150deg, #ffc94e, #d97e1a); color: #3a2200; box-shadow: 0 6px 20px -6px rgba(255,180,60,0.55); }
-
   .day-cell[data-v]:active { transform: scale(0.92); filter: brightness(1.1); }
-
-  .day-cell.today {
-    outline: 2px solid rgba(150, 200, 255, 0.85);
-    outline-offset: -2px;
-  }
+  .day-cell.today { outline: 2px solid rgba(150, 200, 255, 0.85); outline-offset: -2px; }
 
   /* ============ YEAR VIEW ============ */
   .year-grid {
@@ -338,12 +310,7 @@
     grid-template-columns: repeat(12, 1fr);
     gap: 2px;
   }
-  .year-col {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    min-width: 0;
-  }
+  .year-col { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
   .year-col-label {
     flex-shrink: 0;
     text-align: center;
@@ -361,7 +328,6 @@
     grid-template-rows: repeat(31, 1fr);
     gap: 1.5px;
   }
-
   .dot {
     height: 100%;
     aspect-ratio: 1 / 1;
@@ -407,6 +373,13 @@
     padding: 4px 0 2px;
     min-height: 44px;
   }
+  .app.ready .footer {
+    animation: slideUpIn 700ms cubic-bezier(.22,1,.36,1) 220ms backwards;
+  }
+  @keyframes slideUpIn {
+    from { opacity: 0; transform: translateY(14px); filter: blur(2px); }
+    to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+  }
 
   .legend {
     display: flex;
@@ -444,7 +417,6 @@
     justify-content: center;
     padding: 0;
     transition: background 0.2s ease, transform 0.15s ease;
-    -webkit-tap-highlight-color: transparent;
   }
   .view-toggle:active {
     transform: translateY(-50%) scale(0.92);
@@ -455,21 +427,80 @@
     transition: opacity 0.35s cubic-bezier(.22,1,.36,1),
                 transform 0.45s cubic-bezier(.22,1,.36,1);
   }
-  .view-toggle .icon-year {
+  .view-toggle .icon-year { opacity: 0; transform: rotate(60deg) scale(0.6); }
+  .view-toggle .icon-month { opacity: 1; transform: rotate(0deg) scale(1); }
+  .view-toggle[data-mode="month"] .icon-year { opacity: 1; transform: rotate(0deg) scale(1); }
+  .view-toggle[data-mode="month"] .icon-month { opacity: 0; transform: rotate(-60deg) scale(0.6); }
+
+  /* ============ LOADER ============ */
+  .loader {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    display: grid;
+    place-items: center;
+    background: #06080e;
+    transition: opacity 0.7s cubic-bezier(.22,1,.36,1),
+                transform 0.7s cubic-bezier(.22,1,.36,1),
+                filter 0.7s cubic-bezier(.22,1,.36,1);
+  }
+  .loader::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(700px 520px at 50% 40%, rgba(90, 130, 210, 0.10), transparent 65%);
+    pointer-events: none;
+  }
+  .loader.done {
     opacity: 0;
-    transform: rotate(60deg) scale(0.6);
+    transform: scale(1.06);
+    filter: blur(6px);
+    pointer-events: none;
   }
-  .view-toggle .icon-month {
-    opacity: 1;
-    transform: rotate(0deg) scale(1);
+
+  .loader-svg {
+    width: 200px;
+    height: 200px;
+    position: relative;
+    overflow: visible;
   }
-  .view-toggle[data-mode="month"] .icon-year {
-    opacity: 1;
-    transform: rotate(0deg) scale(1);
+
+  .track {
+    fill: none;
+    stroke: rgba(255,255,255,0.055);
+    stroke-width: 2;
   }
-  .view-toggle[data-mode="month"] .icon-month {
-    opacity: 0;
-    transform: rotate(-60deg) scale(0.6);
+
+  .arc-group {
+    transform-origin: 100px 100px;
+    transform: rotate(-135deg);
+    animation: arcSpin 2.4s linear infinite;
+  }
+  @keyframes arcSpin {
+    from { transform: rotate(-135deg); }
+    to   { transform: rotate(225deg); }
+  }
+
+  .moon-group {
+    transform-origin: 100px 100px;
+    animation: moonBreathe 3s ease-in-out infinite;
+  }
+  @keyframes moonBreathe {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.045); }
+  }
+
+  .ldot-g { fill: #4dd184; filter: drop-shadow(0 0 7px rgba(77,209,132,0.75)); }
+  .ldot-r { fill: #ef5a6e; filter: drop-shadow(0 0 7px rgba(239,90,110,0.75)); }
+  .ldot-y { fill: #ffc94e; filter: drop-shadow(0 0 7px rgba(255,201,78,0.75)); }
+
+  .ldot { animation: dotBreathe 1.8s ease-in-out infinite; }
+  .ldot-r { animation-delay: 0.2s; }
+  .ldot-y { animation-delay: 0.4s; }
+  @keyframes dotBreathe {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.55; }
   }
 
   /* ============ MODAL ============ */
@@ -555,19 +586,20 @@
     transition: background 0.2s ease;
   }
   .delete-btn.show { display: block; }
-  .delete-btn:hover { background: rgba(255,70,92,0.16); }
 
   /* ============ RESPONSIVE ============ */
   @media (max-width: 400px) {
-    .day-grid { gap: 5px; }
+    .day-grid { gap: 4px; }
+    .dow-row { gap: 4px; font-size: 10px; }
     .month-title { font-size: 15px; }
     .month-nav button { width: 36px; height: 36px; font-size: 18px; }
     .legend { gap: 9px; font-size: 10px; }
     .view-toggle { width: 36px; height: 36px; border-radius: 12px; }
+    .loader-svg { width: 170px; height: 170px; }
   }
-
   @media (min-width: 720px) {
     .day-grid { gap: 8px; }
+    .dow-row { gap: 8px; }
     .month-title { font-size: 19px; }
     .day-cell { font-size: 20px; }
   }
@@ -579,7 +611,58 @@
 </head>
 <body>
 
-<div class="app">
+<!-- ============ LOADER ============ -->
+<div class="loader" id="loader" aria-hidden="true">
+  <svg class="loader-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="rgba(140,180,255,0)"/>
+        <stop offset="55%" stop-color="rgba(180,210,255,0.55)"/>
+        <stop offset="100%" stop-color="rgba(225,238,255,1)"/>
+      </linearGradient>
+      <linearGradient id="moonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#ffffff"/>
+        <stop offset="55%" stop-color="#d5e1f5"/>
+        <stop offset="100%" stop-color="#7f9ac8"/>
+      </linearGradient>
+      <mask id="crescentMask">
+        <rect x="0" y="0" width="200" height="200" fill="black"/>
+        <circle cx="96" cy="100" r="42" fill="white"/>
+        <circle cx="122" cy="94" r="42" fill="black"/>
+      </mask>
+      <filter id="moonGlow" x="-40%" y="-40%" width="180%" height="180%">
+        <feGaussianBlur stdDeviation="4"/>
+      </filter>
+    </defs>
+
+    <!-- Track ring -->
+    <circle class="track" cx="100" cy="100" r="78"/>
+
+    <!-- Rotating bright arc -->
+    <g class="arc-group">
+      <circle cx="100" cy="100" r="78" fill="none" stroke="url(#arcGrad)"
+              stroke-width="2.5" stroke-linecap="round"
+              stroke-dasharray="120 370"/>
+    </g>
+
+    <!-- Moon: glow layer + sharp layer -->
+    <g class="moon-group">
+      <circle cx="96" cy="100" r="42" fill="#b9cdf1" mask="url(#crescentMask)"
+              filter="url(#moonGlow)" opacity="0.55"/>
+      <circle cx="96" cy="100" r="42" fill="url(#moonGrad)" mask="url(#crescentMask)"/>
+    </g>
+
+    <!-- Dots -->
+    <g class="dots-group">
+      <circle class="ldot ldot-g" cx="174" cy="70" r="5.5"/>
+      <circle class="ldot ldot-r" cx="174" cy="100" r="5.5"/>
+      <circle class="ldot ldot-y" cx="174" cy="130" r="5.5"/>
+    </g>
+  </svg>
+</div>
+
+<!-- ============ APP ============ -->
+<div class="app" id="app">
   <header class="header">
     <div class="year-nav">
       <button id="prevYear" type="button">‹</button>
@@ -605,7 +688,6 @@
   </header>
 
   <div class="view-container">
-    <!-- MONTH VIEW -->
     <div class="view month-view" id="monthView">
       <div class="month-nav">
         <button id="prevMonth" type="button">‹</button>
@@ -621,7 +703,6 @@
       </div>
     </div>
 
-    <!-- YEAR VIEW -->
     <div class="view year-view" id="yearView">
       <div class="year-grid" id="yearGrid"></div>
     </div>
@@ -660,6 +741,7 @@
   </footer>
 </div>
 
+<!-- ============ MODAL ============ -->
 <div class="modal-backdrop" id="backdrop">
   <div class="modal" role="dialog">
     <div class="modal-date" id="modalDate"></div>
@@ -679,6 +761,8 @@
 (function () {
   "use strict";
 
+  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   var tg = window.Telegram ? window.Telegram.WebApp : null;
   if (tg) { tg.ready(); tg.expand(); }
 
@@ -696,33 +780,35 @@
   var THIS_YEAR   = TODAY.getFullYear();
   var TODAY_KEY   = keyOf(THIS_YEAR, TODAY.getMonth(), TODAY.getDate());
 
-  var data         = {};
-  var viewYear     = THIS_YEAR;
-  var viewMonth    = TODAY.getMonth();
-  var activeKey    = null;
-  var currentView  = "month"; // "month" | "year"
+  var data        = {};
+  var viewYear    = THIS_YEAR;
+  var viewMonth   = TODAY.getMonth();
+  var activeKey   = null;
+  var currentView = "month";
 
   // DOM
-  var monthView    = document.getElementById("monthView");
-  var yearView     = document.getElementById("yearView");
-  var yearGrid     = document.getElementById("yearGrid");
-  var dayGrid      = document.getElementById("dayGrid");
-  var yearLabel    = document.getElementById("yearLabel");
-  var yearBtn      = document.getElementById("yearBtn");
-  var yearMenu     = document.getElementById("yearMenu");
-  var prevBtn      = document.getElementById("prevYear");
-  var nextBtn      = document.getElementById("nextYear");
-  var countNum     = document.getElementById("countNum");
-  var countWord    = document.getElementById("countWord");
-  var dateDisplay  = document.getElementById("dateDisplay");
-  var backdrop     = document.getElementById("backdrop");
-  var modalDate    = document.getElementById("modalDate");
-  var optionsEl    = document.getElementById("options");
-  var deleteBtn    = document.getElementById("deleteBtn");
-  var monthTitle   = document.getElementById("monthTitle");
-  var prevMonthBtn = document.getElementById("prevMonth");
-  var nextMonthBtn = document.getElementById("nextMonth");
-  var viewToggle   = document.getElementById("viewToggle");
+  var app         = document.getElementById("app");
+  var loader      = document.getElementById("loader");
+  var monthView   = document.getElementById("monthView");
+  var yearView    = document.getElementById("yearView");
+  var yearGrid    = document.getElementById("yearGrid");
+  var dayGrid     = document.getElementById("dayGrid");
+  var yearLabel   = document.getElementById("yearLabel");
+  var yearBtn     = document.getElementById("yearBtn");
+  var yearMenu    = document.getElementById("yearMenu");
+  var prevBtn     = document.getElementById("prevYear");
+  var nextBtn     = document.getElementById("nextYear");
+  var countNum    = document.getElementById("countNum");
+  var countWord   = document.getElementById("countWord");
+  var dateDisplay = document.getElementById("dateDisplay");
+  var backdrop    = document.getElementById("backdrop");
+  var modalDate   = document.getElementById("modalDate");
+  var optionsEl   = document.getElementById("options");
+  var deleteBtn   = document.getElementById("deleteBtn");
+  var monthTitle  = document.getElementById("monthTitle");
+  var prevMonthBtn= document.getElementById("prevMonth");
+  var nextMonthBtn= document.getElementById("nextMonth");
+  var viewToggle  = document.getElementById("viewToggle");
 
   // ============ UTILS ============
   function keyOf(y, m, d) {
@@ -784,19 +870,19 @@
     });
   }
 
-  // ============ ELEGANT ENTRANCE ANIMATION ============
-  // Плавный подъём снизу вверх с лёгким motion blur.
-  // Никаких отскоков. Просто нежно и элегантно.
+  // ============ ENTRY ANIMATION ============
+  // Изысканное появление: снизу вверх, лёгкий motion-blur.
+  // Никаких отскоков. Только нежность.
   function animateElementIn(el, delayMs) {
-    if (!el || !el.animate) return;
+    if (!el || !el.animate || reduceMotion) return;
     if (el._sleepAnim) { try { el._sleepAnim.cancel(); } catch(e){} }
     el._sleepAnim = el.animate(
       [
-        { opacity: 0, transform: "translateY(16px) scale(0.5)", filter: "blur(3px)" },
+        { opacity: 0, transform: "translateY(14px) scale(0.55)", filter: "blur(3px)" },
         { opacity: 1, transform: "translateY(0) scale(1)",      filter: "blur(0)" }
       ],
       {
-        duration: 620,
+        duration: 640,
         delay: delayMs,
         easing: "cubic-bezier(.22, 1, .36, 1)",
         fill: "backwards"
@@ -805,431 +891,29 @@
   }
 
   function animateMonthGrid() {
+    if (reduceMotion) return;
     var cells = dayGrid.querySelectorAll(".day-cell:not(.blank)");
     for (var i = 0; i < cells.length; i++) {
-      // Мягкая волна слева-вправо, сверху-вниз
-      animateElementIn(cells[i], i * 9);
+      animateElementIn(cells[i], i * 10);
     }
   }
 
   function animateYearGrid() {
+    if (reduceMotion) return;
     var cols = yearGrid.querySelectorAll(".year-col");
     for (var c = 0; c < cols.length; c++) {
       var dots = cols[c].querySelectorAll(".dot:not(.blank)");
       var total = dots.length;
       for (var i = 0; i < total; i++) {
-        // Волна: снизу вверх в каждой колонке
-        // Плюс общий сдвиг между колонками слева-направо
         var rowFromBottom = total - 1 - i;
-        var delay = c * 26 + rowFromBottom * 5;
+        var delay = c * 24 + rowFromBottom * 6;
         animateElementIn(dots[i], delay);
       }
     }
   }
 
-  // ============ RENDER: MONTH VIEW ============
+  // ============ RENDER: MONTH ============
   function renderMonthGrid() {
     monthTitle.textContent = MONTHS_FULL[viewMonth] + " " + viewYear;
 
-    var atMin = (viewYear === THIS_YEAR - YEARS_BACK && viewMonth === 0);
-    var atMax = (viewYear === THIS_YEAR && viewMonth === 11);
-    prevMonthBtn.disabled = atMin;
-    nextMonthBtn.disabled = atMax;
-
-    dayGrid.innerHTML = "";
-
-    var firstDow = new Date(viewYear, viewMonth, 1).getDay();
-    var offset   = (firstDow + 6) % 7;
-    var total    = new Date(viewYear, viewMonth + 1, 0).getDate();
-
-    var frag = document.createDocumentFragment();
-    for (var i = 0; i < 42; i++) {
-      var dayNum = i - offset + 1;
-      if (dayNum < 1 || dayNum > total) {
-        var blank = document.createElement("div");
-        blank.className = "day-cell blank";
-        frag.appendChild(blank);
-      } else {
-        frag.appendChild(buildDayCell(viewYear, viewMonth, dayNum));
-      }
-    }
-    dayGrid.appendChild(frag);
-
-    if (currentView === "month") animateMonthGrid();
-  }
-
-  function buildDayCell(year, month, d) {
-    var key = keyOf(year, month, d);
-    var el = document.createElement("button");
-    el.type = "button";
-    el.className = "day-cell";
-    el.dataset.key = key;
-    el.textContent = d;
-    applyDayCellState(el, key, year, month, d);
-    el.addEventListener("click", onDayClick);
-    el.addEventListener("mouseenter", onDayEnter);
-    el.addEventListener("touchstart", onDayEnter, { passive: true });
-    return el;
-  }
-
-  function applyDayCellState(el, key, year, month, d) {
-    el.classList.remove("editable", "future", "locked", "today");
-    el.removeAttribute("data-v");
-
-    var val = data[key];
-    var diff = diffFromToday(year, month, d);
-
-    if (val !== undefined && val !== null) {
-      el.dataset.v = val;
-    } else if (diff < 0) {
-      el.classList.add("future");
-    } else if (diff > 2) {
-      el.classList.add("locked");
-    } else {
-      el.classList.add("editable");
-    }
-    if (key === TODAY_KEY) el.classList.add("today");
-  }
-
-  // ============ RENDER: YEAR VIEW ============
-  function renderYearGrid() {
-    yearGrid.innerHTML = "";
-    var frag = document.createDocumentFragment();
-    for (var m = 0; m < 12; m++) frag.appendChild(buildYearCol(viewYear, m));
-    yearGrid.appendChild(frag);
-
-    if (currentView === "year") animateYearGrid();
-  }
-
-  function buildYearCol(year, month) {
-    var col = document.createElement("div");
-    col.className = "year-col";
-
-    var label = document.createElement("div");
-    label.className = "year-col-label";
-    label.textContent = MONTHS_SHORT[month];
-    col.appendChild(label);
-
-    var dots = document.createElement("div");
-    dots.className = "year-dots";
-
-    var total = new Date(year, month + 1, 0).getDate();
-    var frag = document.createDocumentFragment();
-    for (var d = 1; d <= 31; d++) {
-      if (d > total) {
-        var blank = document.createElement("div");
-        blank.className = "dot blank";
-        frag.appendChild(blank);
-      } else {
-        frag.appendChild(buildDot(year, month, d));
-      }
-    }
-    dots.appendChild(frag);
-    col.appendChild(dots);
-    return col;
-  }
-
-  function buildDot(year, month, d) {
-    var key = keyOf(year, month, d);
-    var el = document.createElement("button");
-    el.type = "button";
-    el.className = "dot";
-    el.dataset.key = key;
-    applyDotState(el, key, year, month, d);
-    el.addEventListener("click", onDayClick);
-    el.addEventListener("mouseenter", onDayEnter);
-    return el;
-  }
-
-  function applyDotState(el, key, year, month, d) {
-    el.classList.remove("editable", "future", "locked", "today");
-    el.removeAttribute("data-v");
-
-    var val = data[key];
-    var diff = diffFromToday(year, month, d);
-
-    if (val !== undefined && val !== null) {
-      el.dataset.v = val;
-    } else if (diff < 0) {
-      el.classList.add("future");
-    } else if (diff > 2) {
-      el.classList.add("locked");
-    } else {
-      el.classList.add("editable");
-    }
-    if (key === TODAY_KEY) el.classList.add("today");
-  }
-
-  // ============ SHARED ============
-  function updateCounter() {
-    var prefix = viewYear + "-";
-    var n = 0;
-    for (var k in data) if (k.indexOf(prefix) === 0) n++;
-    countNum.textContent = n;
-    countWord.textContent = plural(n, ["ночь", "ночи", "ночей"]);
-  }
-
-  function updateDateDisplay(dt) {
-    dateDisplay.textContent = formatDate(dt);
-  }
-
-  function updateYearNav() {
-    yearLabel.textContent = viewYear;
-    nextBtn.disabled = viewYear >= THIS_YEAR;
-    prevBtn.disabled = viewYear <= THIS_YEAR - YEARS_BACK;
-    buildYearMenu();
-  }
-
-  function onDayEnter(e) {
-    var key = e.currentTarget.dataset.key;
-    if (!key) return;
-    updateDateDisplay(parseKey(key));
-  }
-
-  function onDayClick(e) {
-    var el = e.currentTarget;
-    var key = el.dataset.key;
-    if (!key) return;
-
-    var dt = parseKey(key);
-    if (!isEditable(dt.getFullYear(), dt.getMonth(), dt.getDate())) {
-      if (el.animate) {
-        el.animate(
-          [{ transform: "scale(1)" },
-           { transform: "scale(0.94)" },
-           { transform: "scale(1)" }],
-          { duration: 220, easing: "cubic-bezier(.22,1,.36,1)" }
-        );
-      }
-      return;
-    }
-    openModal(key, dt);
-  }
-
-  // ============ MODAL ============
-  function openModal(key, dt) {
-    activeKey = key;
-    modalDate.textContent = formatDate(dt);
-
-    var current = data[key];
-    var opts = optionsEl.querySelectorAll(".opt");
-    for (var i = 0; i < opts.length; i++) {
-      opts[i].classList.toggle("selected", Number(opts[i].dataset.v) === current);
-    }
-    deleteBtn.classList.toggle("show", current !== undefined);
-    backdrop.classList.add("open");
-  }
-
-  function closeModal() {
-    backdrop.classList.remove("open");
-    activeKey = null;
-    updateDateDisplay(TODAY);
-  }
-
-  optionsEl.addEventListener("click", function (e) {
-    var btn = e.target.closest(".opt");
-    if (!btn || !activeKey) return;
-    var key = activeKey;
-    data[key] = Number(btn.dataset.v);
-    saveToCloud();
-    patchDay(key);
-    closeModal();
-  });
-
-  deleteBtn.addEventListener("click", function () {
-    if (!activeKey) return;
-    var key = activeKey;
-    delete data[key];
-    saveToCloud();
-    patchDay(key);
-    closeModal();
-  });
-
-  function patchDay(key) {
-    var els = document.querySelectorAll('[data-key="' + key + '"]');
-    var dt = parseKey(key);
-    for (var i = 0; i < els.length; i++) {
-      var el = els[i];
-      if (el.classList.contains("dot")) {
-        applyDotState(el, key, dt.getFullYear(), dt.getMonth(), dt.getDate());
-      } else {
-        applyDayCellState(el, key, dt.getFullYear(), dt.getMonth(), dt.getDate());
-      }
-      if (el.animate) {
-        el.animate(
-          [{ transform: "scale(1)" },
-           { transform: "scale(1.18)" },
-           { transform: "scale(1)" }],
-          { duration: 420, easing: "cubic-bezier(.22,1,.36,1)" }
-        );
-      }
-    }
-    updateCounter();
-  }
-
-  backdrop.addEventListener("click", function (e) {
-    if (e.target === backdrop) closeModal();
-  });
-
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") {
-      if (backdrop.classList.contains("open")) closeModal();
-      closeYearMenu();
-    }
-  });
-
-  // ============ VIEW TOGGLE ============
-  function setView(mode, animate) {
-    if (mode === currentView && animate !== "force") return;
-    currentView = mode;
-
-    if (mode === "year") {
-      monthView.classList.remove("active");
-      yearView.classList.add("active");
-      viewToggle.setAttribute("data-mode", "year");
-      if (animate !== false) {
-        // небольшая задержка чтобы view успел стать видимым
-        setTimeout(animateYearGrid, 80);
-      }
-    } else {
-      yearView.classList.remove("active");
-      monthView.classList.add("active");
-      viewToggle.setAttribute("data-mode", "month");
-      if (animate !== false) {
-        setTimeout(animateMonthGrid, 80);
-      }
-    }
-  }
-
-  viewToggle.addEventListener("click", function () {
-    setView(currentView === "month" ? "year" : "month", true);
-  });
-
-  // ============ MONTH NAV ============
-  prevMonthBtn.addEventListener("click", function () {
-    if (viewMonth === 0) {
-      if (viewYear - 1 >= THIS_YEAR - YEARS_BACK) {
-        viewYear--;
-        viewMonth = 11;
-      }
-    } else {
-      viewMonth--;
-    }
-    updateYearNav();
-    updateCounter();
-    renderMonthGrid();
-  });
-
-  nextMonthBtn.addEventListener("click", function () {
-    if (viewMonth === 11) {
-      if (viewYear + 1 <= THIS_YEAR) {
-        viewYear++;
-        viewMonth = 0;
-      }
-    } else {
-      viewMonth++;
-    }
-    updateYearNav();
-    updateCounter();
-    renderMonthGrid();
-  });
-
-  // Свайп по календарю — плавная смена месяца
-  var touchStartX = 0, touchStartY = 0, touchTime = 0;
-  dayGrid.addEventListener("touchstart", function (e) {
-    if (e.touches.length !== 1) return;
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-    touchTime = Date.now();
-  }, { passive: true });
-
-  dayGrid.addEventListener("touchend", function (e) {
-    if (!e.changedTouches.length) return;
-    var dx = e.changedTouches[0].clientX - touchStartX;
-    var dy = e.changedTouches[0].clientY - touchStartY;
-    var t  = Date.now() - touchTime;
-    if (t > 600) return;
-    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)) return;
-    if (dx > 0) {
-      if (!prevMonthBtn.disabled) prevMonthBtn.click();
-    } else {
-      if (!nextMonthBtn.disabled) nextMonthBtn.click();
-    }
-  }, { passive: true });
-
-  // ============ YEAR NAV ============
-  prevBtn.addEventListener("click", function () {
-    if (viewYear - 1 >= THIS_YEAR - YEARS_BACK) {
-      viewYear--;
-      updateYearNav();
-      updateCounter();
-      if (currentView === "year") renderYearGrid();
-      else renderMonthGrid();
-    }
-  });
-  nextBtn.addEventListener("click", function () {
-    if (viewYear + 1 <= THIS_YEAR) {
-      viewYear++;
-      updateYearNav();
-      updateCounter();
-      if (currentView === "year") renderYearGrid();
-      else renderMonthGrid();
-    }
-  });
-
-  function buildYearMenu() {
-    yearMenu.innerHTML = "";
-    for (var y = THIS_YEAR; y >= THIS_YEAR - YEARS_BACK; y--) {
-      (function (yr) {
-        var b = document.createElement("button");
-        b.type = "button";
-        b.textContent = yr;
-        if (yr === viewYear) b.classList.add("active");
-        b.addEventListener("click", function () {
-          viewYear = yr;
-          closeYearMenu();
-          updateYearNav();
-          updateCounter();
-          if (currentView === "year") renderYearGrid();
-          else renderMonthGrid();
-        });
-        yearMenu.appendChild(b);
-      })(y);
-    }
-  }
-  function openYearMenu() { yearMenu.classList.add("open"); }
-  function closeYearMenu() { yearMenu.classList.remove("open"); }
-
-  yearBtn.addEventListener("click", function (e) {
-    e.stopPropagation();
-    if (yearMenu.classList.contains("open")) closeYearMenu();
-    else openYearMenu();
-  });
-  document.addEventListener("click", function (e) {
-    if (!yearMenu.contains(e.target) && !yearBtn.contains(e.target)) closeYearMenu();
-  });
-
-  // ============ START ============
-  loadFromCloud(function () {
-    var isWide = window.matchMedia("(min-width: 720px)").matches;
-    var initial = isWide ? "year" : "month";
-
-    // Сначала рендерим оба вида
-    updateYearNav();
-    updateCounter();
-    updateDateDisplay(TODAY);
-    renderMonthGrid();
-    renderYearGrid();
-
-    // Затем показываем нужный
-    if (initial === "year") {
-      setView("year", "force");
-    } else {
-      setView("month", "force");
-    }
-  });
-
-})();
-</script>
-</body>
-</html>
+    var atMin = (viewYear === THIS
