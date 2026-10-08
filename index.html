@@ -4,10 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#06080e">
-<title>Трекер сна</title>
+<title>Sleep tracker</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  /* ===== БАЗА ===== */
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   html, body {
@@ -16,6 +15,7 @@
     -webkit-tap-highlight-color: transparent;
     -webkit-user-select: none;
     user-select: none;
+    overscroll-behavior: none;
   }
 
   body {
@@ -44,22 +44,23 @@
     height: 100dvh;
     display: flex;
     flex-direction: column;
-    padding: 8px 10px 6px;
+    padding: 8px 12px 6px;
     padding-top: max(8px, env(safe-area-inset-top));
     padding-bottom: max(6px, env(safe-area-inset-bottom));
-    gap: 6px;
+    gap: 8px;
     max-width: 1000px;
     margin: 0 auto;
     width: 100%;
   }
 
-  /* ===== HEADER ===== */
+  /* ============ HEADER ============ */
   .header {
     flex-shrink: 0;
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 8px;
+    min-height: 30px;
   }
 
   .year-nav {
@@ -107,16 +108,8 @@
     align-items: baseline;
     gap: 4px;
     font-family: inherit;
-    transition: background 0.15s;
   }
-  .year-btn:hover { background: rgba(255,255,255,0.06); }
-  .year-btn .chev {
-    opacity: 0.30;
-    transition: transform 0.2s;
-    position: relative;
-    top: -2px;
-  }
-  .year-btn.open .chev { transform: rotate(180deg); }
+  .year-btn .chev { opacity: 0.30; position: relative; top: -2px; }
 
   .year-menu {
     position: absolute;
@@ -136,11 +129,8 @@
     -webkit-backdrop-filter: blur(20px);
     box-shadow: 0 18px 36px -16px rgba(0,0,0,0.95);
     z-index: 100;
-    opacity: 0;
-    transition: opacity 0.15s, transform 0.2s;
-    transform: translateY(-4px);
   }
-  .year-menu.open { display: flex; opacity: 1; transform: translateY(0); }
+  .year-menu.open { display: flex; }
   .year-menu button {
     padding: 5px 10px;
     border: none;
@@ -154,7 +144,6 @@
     font-variant-numeric: tabular-nums;
     font-family: inherit;
   }
-  .year-menu button:hover { background: rgba(255,255,255,0.07); color: #fff; }
   .year-menu button.active { background: rgba(120,180,255,0.13); color: #a8d4ff; }
 
   .date-display {
@@ -175,25 +164,16 @@
     gap: 3px;
     font-variant-numeric: tabular-nums;
   }
-  .counter .num {
-    font-size: 16px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-  }
-  .counter .word {
-    font-size: 10px;
-    color: rgba(255,255,255,0.34);
-    font-weight: 400;
-  }
+  .counter .num { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }
+  .counter .word { font-size: 10px; color: rgba(255,255,255,0.34); }
 
-  /* ===== GRID ===== */
+  /* ============ DESKTOP (year-in-pixels) ============ */
   .grid-wrap {
     flex: 1;
     min-height: 0;
     display: flex;
     justify-content: center;
   }
-
   .grid {
     width: 100%;
     max-width: 820px;
@@ -202,14 +182,12 @@
     grid-template-columns: repeat(12, 1fr);
     gap: 2px;
   }
-
   .month-col {
     display: flex;
     flex-direction: column;
     min-height: 0;
     min-width: 0;
   }
-
   .month-label {
     flex-shrink: 0;
     text-align: center;
@@ -220,7 +198,6 @@
     color: rgba(255,255,255,0.26);
     padding-bottom: 4px;
   }
-
   .dots {
     flex: 1;
     min-height: 0;
@@ -228,7 +205,6 @@
     grid-template-rows: repeat(31, 1fr);
     gap: 1.5px;
   }
-
   .dot {
     width: 100%;
     max-width: 16px;
@@ -249,7 +225,6 @@
     transform: scale(1.4);
     background: rgba(255,255,255,0.24);
     box-shadow: 0 0 10px rgba(255,255,255,0.22);
-    z-index: 3;
   }
   .dot.future { background: rgba(255,255,255,0.018); }
   .dot.locked {
@@ -257,23 +232,145 @@
       repeating-linear-gradient(45deg, rgba(255,255,255,0.045) 0 1px, transparent 1px 3px),
       rgba(255,255,255,0.018);
   }
-
   .dot[data-v="5"] { background: linear-gradient(145deg, #ef5a6e, #a11d34); box-shadow: 0 0 7px rgba(230,70,100,0.3); }
   .dot[data-v="6"] { background: linear-gradient(145deg, #33a06d, #155439); box-shadow: 0 0 7px rgba(50,160,110,0.28); }
   .dot[data-v="7"] { background: linear-gradient(145deg, #4dd184, #1d8a52); box-shadow: 0 0 9px rgba(70,200,130,0.32); }
   .dot[data-v="8"] { background: linear-gradient(145deg, #3fe0a3, #0daa6c); box-shadow: 0 0 10px rgba(70,220,160,0.4); }
   .dot[data-v="9"] { background: linear-gradient(145deg, #ffc94e, #d97e1a); box-shadow: 0 0 10px rgba(255,180,60,0.36); }
-
-  .dot[data-v]:hover { transform: scale(1.3); filter: brightness(1.12); z-index: 3; }
+  .dot[data-v]:hover { transform: scale(1.3); filter: brightness(1.12); }
   .dot.today { outline: 2px solid rgba(150, 200, 255, 0.85); outline-offset: 1.5px; }
 
-  /* ===== LEGEND ===== */
+  /* ============ MOBILE (month calendar) ============ */
+  .mobile-view {
+    flex: 1;
+    min-height: 0;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .month-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .month-nav button {
+    width: 40px;
+    height: 40px;
+    border: 0;
+    background: rgba(255,255,255,0.055);
+    color: rgba(255,255,255,0.65);
+    border-radius: 12px;
+    font-size: 20px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: background 0.15s, transform 0.12s;
+  }
+  .month-nav button:active:not(:disabled) { transform: scale(0.94); background: rgba(255,255,255,0.12); }
+  .month-nav button:disabled { opacity: 0.18; cursor: default; }
+
+  .month-title {
+    flex: 1;
+    text-align: center;
+    font-size: 17px;
+    font-weight: 650;
+    letter-spacing: -0.012em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dow-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.22);
+    text-align: center;
+    padding: 0 2px;
+  }
+
+  .day-grid {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(6, 1fr);
+    gap: 6px;
+  }
+
+  .day-cell {
+    border-radius: 15px;
+    border: 0;
+    padding: 0;
+    font-family: inherit;
+    font-size: clamp(15px, 4.5vw, 20px);
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+    background: transparent;
+    color: rgba(255,255,255,0.35);
+    cursor: default;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.14s, background 0.14s, box-shadow 0.14s;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .day-cell.blank { visibility: hidden; }
+
+  .day-cell.editable {
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.72);
+    cursor: pointer;
+  }
+  .day-cell.editable:active {
+    transform: scale(0.93);
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+  }
+
+  .day-cell.future {
+    background: transparent;
+    color: rgba(255,255,255,0.10);
+  }
+
+  .day-cell.locked {
+    background:
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0 2px, transparent 2px 6px),
+      rgba(255,255,255,0.012);
+    color: rgba(255,255,255,0.22);
+  }
+
+  .day-cell[data-v="5"] { background: linear-gradient(150deg, #e35a6e, #a11d34); color: #fff; box-shadow: 0 6px 18px -6px rgba(230,70,100,0.55); }
+  .day-cell[data-v="6"] { background: linear-gradient(150deg, #33a06d, #155439); color: #eafff4; box-shadow: 0 6px 18px -6px rgba(50,160,110,0.5); }
+  .day-cell[data-v="7"] { background: linear-gradient(150deg, #4dd184, #1d8a52); color: #04301c; box-shadow: 0 6px 18px -6px rgba(70,200,130,0.55); }
+  .day-cell[data-v="8"] { background: linear-gradient(150deg, #3fe0a3, #0daa6c); color: #04301c; box-shadow: 0 6px 20px -6px rgba(70,220,160,0.6); }
+  .day-cell[data-v="9"] { background: linear-gradient(150deg, #ffc94e, #d97e1a); color: #3a2200; box-shadow: 0 6px 20px -6px rgba(255,180,60,0.55); }
+
+  .day-cell[data-v]:active { transform: scale(0.93); filter: brightness(1.1); }
+
+  .day-cell.today {
+    outline: 2px solid rgba(150, 200, 255, 0.85);
+    outline-offset: -2px;
+  }
+
+  /* ============ LEGEND ============ */
   .legend {
     flex-shrink: 0;
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     padding: 4px 0 2px;
     font-size: 10px;
     color: rgba(255,255,255,0.42);
@@ -287,7 +384,7 @@
   .legend-swatch[data-v="8"] { background: linear-gradient(145deg, #3fe0a3, #0daa6c); }
   .legend-swatch[data-v="9"] { background: linear-gradient(145deg, #ffc94e, #d97e1a); }
 
-  /* ===== MODAL ===== */
+  /* ============ MODAL ============ */
   .modal-backdrop {
     position: fixed;
     inset: 0;
@@ -306,8 +403,8 @@
 
   .modal {
     width: min(340px, 100%);
-    padding: 18px 16px 16px;
-    border-radius: 20px;
+    padding: 20px 16px 16px;
+    border-radius: 22px;
     text-align: center;
     background: linear-gradient(165deg, rgba(255,255,255,0.10), rgba(255,255,255,0.03));
     border: 1px solid rgba(255,255,255,0.12);
@@ -326,10 +423,10 @@
   .opt {
     flex: 1 1 0;
     min-width: 0;
-    padding: 12px 3px;
+    padding: 14px 3px;
     border: 0;
-    border-radius: 12px;
-    font-size: 13px;
+    border-radius: 13px;
+    font-size: 14px;
     font-weight: 700;
     font-family: inherit;
     cursor: pointer;
@@ -337,10 +434,9 @@
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.22);
     transition: opacity 0.18s, transform 0.18s, box-shadow 0.18s;
   }
-  .opt:hover { opacity: 0.86; transform: translateY(-1px); }
+  .opt:active { transform: scale(0.96); }
   .opt.selected {
     opacity: 1;
-    transform: translateY(-1px);
     box-shadow: 0 0 0 2px rgba(255,255,255,0.75), inset 0 1px 0 rgba(255,255,255,0.3);
   }
   .opt[data-v="5"] { background: linear-gradient(145deg, #ef5a6e, #a11d34); color: #fff; }
@@ -353,8 +449,8 @@
     display: none;
     width: 100%;
     margin-top: 10px;
-    padding: 10px;
-    border-radius: 12px;
+    padding: 11px;
+    border-radius: 13px;
     border: 1px solid rgba(255,90,112,0.2);
     background: rgba(255,70,92,0.08);
     color: #ff8b9b;
@@ -364,18 +460,24 @@
     cursor: pointer;
   }
   .delete-btn.show { display: block; }
-  .delete-btn:hover { background: rgba(255,70,92,0.16); }
 
-  @media (max-width: 400px) {
-    .app { padding: 6px 6px 4px; gap: 4px; }
-    .year-btn { font-size: 18px; }
-    .counter .num { font-size: 14px; }
-    .counter .word { font-size: 9px; }
-    .date-display { font-size: 11px; }
-    .month-label { font-size: 7px; padding-bottom: 3px; }
-    .dot { max-width: 13px; }
-    .legend { gap: 7px; font-size: 9px; }
-    .legend-swatch { width: 7px; height: 7px; }
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 720px) {
+    .grid-wrap { display: none; }
+    .mobile-view { display: flex; }
+    .app { padding: 6px 10px 4px; gap: 6px; }
+    .year-btn { font-size: 19px; }
+    .counter .num { font-size: 15px; }
+    .counter .word { font-size: 10px; }
+    .date-display { font-size: 12px; }
+    .legend { gap: 9px; font-size: 10px; }
+  }
+
+  @media (max-width: 380px) {
+    .day-grid { gap: 5px; }
+    .day-cell { border-radius: 13px; }
+    .month-title { font-size: 15px; }
+    .month-nav button { width: 36px; height: 36px; font-size: 18px; }
   }
 </style>
 </head>
@@ -406,8 +508,25 @@
     </div>
   </header>
 
+  <!-- DESKTOP: year in pixels -->
   <div class="grid-wrap">
     <div class="grid" id="grid"></div>
+  </div>
+
+  <!-- MOBILE: month calendar -->
+  <div class="mobile-view">
+    <div class="month-nav">
+      <button id="prevMonth" type="button">‹</button>
+      <div class="month-title" id="monthTitle">—</div>
+      <button id="nextMonth" type="button">›</button>
+    </div>
+
+    <div class="dow-row">
+      <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span>
+      <span>Пт</span><span>Сб</span><span>Вс</span>
+    </div>
+
+    <div class="day-grid" id="dayGrid"></div>
   </div>
 
   <footer class="legend">
@@ -438,48 +557,50 @@
 (function () {
   "use strict";
 
-  // ==== TELEGRAM ====
   var tg = window.Telegram ? window.Telegram.WebApp : null;
   if (tg) {
     tg.ready();
     tg.expand();
-    tg.enableClosingConfirmation();
   }
 
-  // ==== CONSTANTS ====
   var CLOUD_KEY = "sleep_tracker_data";
   var MONTHS_SHORT = ["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
-  var MONTHS_GEN = ["января","февраля","марта","апреля","мая","июня",
-                    "июля","августа","сентября","октября","ноября","декабря"];
-  var WEEKDAYS = ["Воскресенье","Понедельник","Вторник","Среда","Четверг","Пятница","Суббота"];
-  var YEARS_BACK = 9;
+  var MONTHS_FULL  = ["Январь","Февраль","Март","Апрель","Май","Июнь",
+                      "Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+  var MONTHS_GEN   = ["января","февраля","марта","апреля","мая","июня",
+                      "июля","августа","сентября","октября","ноября","декабря"];
+  var WEEKDAYS     = ["Воскресенье","Понедельник","Вторник","Среда","Четверг","Пятница","Суббота"];
+  var YEARS_BACK   = 9;
 
   var _n = new Date();
-  var TODAY = new Date(_n.getFullYear(), _n.getMonth(), _n.getDate());
-  var THIS_YEAR = TODAY.getFullYear();
-  var TODAY_KEY = keyOf(THIS_YEAR, TODAY.getMonth(), TODAY.getDate());
+  var TODAY       = new Date(_n.getFullYear(), _n.getMonth(), _n.getDate());
+  var THIS_YEAR   = TODAY.getFullYear();
+  var TODAY_KEY   = keyOf(THIS_YEAR, TODAY.getMonth(), TODAY.getDate());
 
-  var data = {};
-  var viewYear = THIS_YEAR;
-  var activeKey = null;
-  var cloudReady = false;
+  var data        = {};
+  var viewYear    = THIS_YEAR;                 // desktop year
+  var mobileYear  = THIS_YEAR;                 // mobile month year
+  var mobileMonth = TODAY.getMonth();          // 0-11
+  var activeKey   = null;
 
-  // ==== DOM ====
-  var gridEl      = document.getElementById("grid");
-  var yearLabel   = document.getElementById("yearLabel");
-  var yearBtn     = document.getElementById("yearBtn");
-  var yearMenu    = document.getElementById("yearMenu");
-  var prevBtn     = document.getElementById("prevYear");
-  var nextBtn     = document.getElementById("nextYear");
-  var countNum    = document.getElementById("countNum");
-  var countWord   = document.getElementById("countWord");
-  var dateDisplay = document.getElementById("dateDisplay");
-  var backdrop    = document.getElementById("backdrop");
-  var modalDate   = document.getElementById("modalDate");
-  var optionsEl   = document.getElementById("options");
-  var deleteBtn   = document.getElementById("deleteBtn");
+  var gridEl       = document.getElementById("grid");
+  var yearLabel    = document.getElementById("yearLabel");
+  var yearBtn      = document.getElementById("yearBtn");
+  var yearMenu     = document.getElementById("yearMenu");
+  var prevBtn      = document.getElementById("prevYear");
+  var nextBtn      = document.getElementById("nextYear");
+  var countNum     = document.getElementById("countNum");
+  var countWord    = document.getElementById("countWord");
+  var dateDisplay  = document.getElementById("dateDisplay");
+  var backdrop     = document.getElementById("backdrop");
+  var modalDate    = document.getElementById("modalDate");
+  var optionsEl    = document.getElementById("options");
+  var deleteBtn    = document.getElementById("deleteBtn");
+  var dayGrid      = document.getElementById("dayGrid");
+  var monthTitle   = document.getElementById("monthTitle");
+  var prevMonthBtn = document.getElementById("prevMonth");
+  var nextMonthBtn = document.getElementById("nextMonth");
 
-  // ==== UTILS ====
   function keyOf(y, m, d) {
     return y + "-" + String(m+1).padStart(2, "0") + "-" + String(d).padStart(2, "0");
   }
@@ -509,16 +630,14 @@
                            : (wd + ", " + d + " " + m + " " + y);
   }
 
-  // ==== CLOUD STORAGE ====
-  function loadFromCloud(callback) {
+  /* ============ CLOUD ============ */
+  function loadFromCloud(cb) {
     if (!tg || !tg.CloudStorage) {
-      // fallback
       try {
         var raw = localStorage.getItem(CLOUD_KEY);
         data = raw ? JSON.parse(raw) : {};
       } catch(e) { data = {}; }
-      cloudReady = true;
-      callback();
+      cb();
       return;
     }
     tg.CloudStorage.getItem(CLOUD_KEY, function (err, value) {
@@ -527,11 +646,9 @@
       } else {
         data = {};
       }
-      cloudReady = true;
-      callback();
+      cb();
     });
   }
-
   function saveToCloud() {
     var json = JSON.stringify(data);
     if (!tg || !tg.CloudStorage) {
@@ -543,8 +660,8 @@
     });
   }
 
-  // ==== RENDER ====
-  function render(animate) {
+  /* ============ RENDER: DESKTOP ============ */
+  function renderDesktop(animate) {
     yearLabel.textContent = viewYear;
     nextBtn.disabled = viewYear >= THIS_YEAR;
     updateCounter();
@@ -552,13 +669,13 @@
 
     gridEl.innerHTML = "";
     var frag = document.createDocumentFragment();
-    for (var m = 0; m < 12; m++) frag.appendChild(buildMonth(viewYear, m, animate));
+    for (var m = 0; m < 12; m++) frag.appendChild(buildMonthCol(viewYear, m));
     gridEl.appendChild(frag);
 
     buildYearMenu();
   }
 
-  function buildMonth(year, month, animate) {
+  function buildMonthCol(year, month) {
     var col = document.createElement("div");
     col.className = "month-col";
 
@@ -590,13 +707,9 @@
     el.type = "button";
     el.className = "dot";
     el.dataset.key = key;
-
     applyDotState(el, key, year, month, d);
-
-    el.addEventListener("click", onDotClick);
-    el.addEventListener("mouseenter", onDotEnter);
-    el.addEventListener("touchstart", onDotEnter, {passive: true});
-
+    el.addEventListener("click", onDayClick);
+    el.addEventListener("mouseenter", onDayEnter);
     return el;
   }
 
@@ -619,6 +732,71 @@
     if (key === TODAY_KEY) el.classList.add("today");
   }
 
+  /* ============ RENDER: MOBILE ============ */
+  function renderMobile() {
+    monthTitle.textContent = MONTHS_FULL[mobileMonth] + " " + mobileYear;
+
+    var atMin = (mobileYear === THIS_YEAR - YEARS_BACK && mobileMonth === 0);
+    var atMax = (mobileYear === THIS_YEAR && mobileMonth === 11);
+    prevMonthBtn.disabled = atMin;
+    nextMonthBtn.disabled = atMax;
+
+    dayGrid.innerHTML = "";
+
+    var firstDow = new Date(mobileYear, mobileMonth, 1).getDay(); // 0=Вс
+    var offset   = (firstDow + 6) % 7;                            // 0=Пн
+    var total    = new Date(mobileYear, mobileMonth + 1, 0).getDate();
+
+    // 6 строк × 7 столбцов = 42 ячейки
+    for (var i = 0; i < 42; i++) {
+      var dayNum = i - offset + 1;
+      if (dayNum < 1 || dayNum > total) {
+        var blank = document.createElement("div");
+        blank.className = "day-cell blank";
+        dayGrid.appendChild(blank);
+      } else {
+        dayGrid.appendChild(buildDayCell(mobileYear, mobileMonth, dayNum));
+      }
+    }
+
+    updateCounter();
+    updateDateDisplay(TODAY);
+  }
+
+  function buildDayCell(year, month, d) {
+    var key = keyOf(year, month, d);
+    var el = document.createElement("button");
+    el.type = "button";
+    el.className = "day-cell";
+    el.dataset.key = key;
+    el.textContent = d;
+    applyDayCellState(el, key, year, month, d);
+    el.addEventListener("click", onDayClick);
+    el.addEventListener("touchstart", onDayEnter, { passive: true });
+    el.addEventListener("mouseenter", onDayEnter);
+    return el;
+  }
+
+  function applyDayCellState(el, key, year, month, d) {
+    el.classList.remove("editable", "future", "locked", "today");
+    el.removeAttribute("data-v");
+
+    var val = data[key];
+    var diff = diffFromToday(year, month, d);
+
+    if (val !== undefined && val !== null) {
+      el.dataset.v = val;
+    } else if (diff < 0) {
+      el.classList.add("future");
+    } else if (diff > 2) {
+      el.classList.add("locked");
+    } else {
+      el.classList.add("editable");
+    }
+    if (key === TODAY_KEY) el.classList.add("today");
+  }
+
+  /* ============ SHARED ============ */
   function updateCounter() {
     var prefix = viewYear + "-";
     var n = 0;
@@ -631,36 +809,34 @@
     dateDisplay.textContent = formatDate(dt);
   }
 
-  function onDotEnter(e) {
+  function onDayEnter(e) {
     var key = e.currentTarget.dataset.key;
     if (!key) return;
     updateDateDisplay(parseKey(key));
   }
 
-  gridEl.addEventListener("mouseleave", function () {
-    updateDateDisplay(TODAY);
-  });
-
-  function onDotClick(e) {
+  function onDayClick(e) {
     var el = e.currentTarget;
     var key = el.dataset.key;
     if (!key) return;
 
     var dt = parseKey(key);
     if (!isEditable(dt.getFullYear(), dt.getMonth(), dt.getDate())) {
-      el.animate(
-        [{ transform: "scale(1.4) translateX(0)" },
-         { transform: "scale(1.4) translateX(-2px)" },
-         { transform: "scale(1.4) translateX(2px)" },
-         { transform: "scale(1.4) translateX(0)" }],
-        { duration: 180, easing: "ease-in-out" }
-      );
+      // лёгкая отдача
+      if (el.animate) {
+        el.animate(
+          [{ transform: "scale(1) translateX(0)" },
+           { transform: "scale(0.97) translateX(-2px)" },
+           { transform: "scale(0.97) translateX(2px)" },
+           { transform: "scale(1) translateX(0)" }],
+          { duration: 180, easing: "ease-in-out" }
+        );
+      }
       return;
     }
     openModal(key, dt);
   }
 
-  // ==== MODAL ====
   function openModal(key, dt) {
     activeKey = key;
     modalDate.textContent = formatDate(dt);
@@ -671,7 +847,6 @@
       opts[i].classList.toggle("selected", Number(opts[i].dataset.v) === current);
     }
     deleteBtn.classList.toggle("show", current !== undefined);
-
     backdrop.classList.add("open");
   }
 
@@ -687,7 +862,7 @@
     var key = activeKey;
     data[key] = Number(btn.dataset.v);
     saveToCloud();
-    patchDot(key);
+    patchDay(key);
     closeModal();
   });
 
@@ -696,20 +871,29 @@
     var key = activeKey;
     delete data[key];
     saveToCloud();
-    patchDot(key);
+    patchDay(key);
     closeModal();
   });
 
-  function patchDot(key) {
-    var el = gridEl.querySelector('[data-key="' + key + '"]');
-    if (!el) return;
+  /* Обновляет день во всех видах — и в desktop-точках, и в mobile-плитках */
+  function patchDay(key) {
+    var els = document.querySelectorAll('[data-key="' + key + '"]');
     var dt = parseKey(key);
-    applyDotState(el, key, dt.getFullYear(), dt.getMonth(), dt.getDate());
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i];
+      if (el.classList.contains("dot")) {
+        applyDotState(el, key, dt.getFullYear(), dt.getMonth(), dt.getDate());
+      } else {
+        applyDayCellState(el, key, dt.getFullYear(), dt.getMonth(), dt.getDate());
+      }
+      if (el.animate) {
+        el.animate(
+          [{ transform: "scale(1)" }, { transform: "scale(1.15)" }, { transform: "scale(1)" }],
+          { duration: 240, easing: "ease-out" }
+        );
+      }
+    }
     updateCounter();
-    el.animate(
-      [{ transform: "scale(1)" }, { transform: "scale(1.4)" }, { transform: "scale(1)" }],
-      { duration: 240, easing: "ease-out" }
-    );
   }
 
   backdrop.addEventListener("click", function (e) {
@@ -723,12 +907,12 @@
     }
   });
 
-  // ==== YEAR NAV ====
+  /* ============ YEAR NAV (desktop) ============ */
   prevBtn.addEventListener("click", function () {
-    if (viewYear - 1 >= THIS_YEAR - YEARS_BACK) { viewYear--; render(true); }
+    if (viewYear - 1 >= THIS_YEAR - YEARS_BACK) { viewYear--; renderDesktop(); }
   });
   nextBtn.addEventListener("click", function () {
-    if (viewYear + 1 <= THIS_YEAR) { viewYear++; render(true); }
+    if (viewYear + 1 <= THIS_YEAR) { viewYear++; renderDesktop(); }
   });
 
   function buildYearMenu() {
@@ -742,14 +926,14 @@
         b.addEventListener("click", function () {
           viewYear = yr;
           closeYearMenu();
-          render(true);
+          renderDesktop();
         });
         yearMenu.appendChild(b);
       })(y);
     }
   }
-  function openYearMenu() { yearMenu.classList.add("open"); yearBtn.classList.add("open"); }
-  function closeYearMenu() { yearMenu.classList.remove("open"); yearBtn.classList.remove("open"); }
+  function openYearMenu() { yearMenu.classList.add("open"); }
+  function closeYearMenu() { yearMenu.classList.remove("open"); }
 
   yearBtn.addEventListener("click", function (e) {
     e.stopPropagation();
@@ -760,9 +944,58 @@
     if (!yearMenu.contains(e.target) && !yearBtn.contains(e.target)) closeYearMenu();
   });
 
-  // ==== START ====
+  /* ============ MONTH NAV (mobile) ============ */
+  prevMonthBtn.addEventListener("click", function () {
+    if (mobileMonth === 0) {
+      if (mobileYear - 1 >= THIS_YEAR - YEARS_BACK) {
+        mobileYear--;
+        mobileMonth = 11;
+      }
+    } else {
+      mobileMonth--;
+    }
+    renderMobile();
+  });
+
+  nextMonthBtn.addEventListener("click", function () {
+    if (mobileMonth === 11) {
+      if (mobileYear + 1 <= THIS_YEAR) {
+        mobileYear++;
+        mobileMonth = 0;
+      }
+    } else {
+      mobileMonth++;
+    }
+    renderMobile();
+  });
+
+  /* Свайп по календарю (mobile) */
+  var touchStartX = 0, touchStartY = 0, touchTime = 0;
+  dayGrid.addEventListener("touchstart", function (e) {
+    if (e.touches.length !== 1) return;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchTime = Date.now();
+  }, { passive: true });
+
+  dayGrid.addEventListener("touchend", function (e) {
+    if (!e.changedTouches.length) return;
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    var dy = e.changedTouches[0].clientY - touchStartY;
+    var dt = Date.now() - touchTime;
+    if (dt > 600) return;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)) return;
+    if (dx > 0) {
+      if (!prevMonthBtn.disabled) prevMonthBtn.click();
+    } else {
+      if (!nextMonthBtn.disabled) nextMonthBtn.click();
+    }
+  }, { passive: true });
+
+  /* ============ START ============ */
   loadFromCloud(function () {
-    render(true);
+    renderDesktop();
+    renderMobile();
   });
 
 })();
